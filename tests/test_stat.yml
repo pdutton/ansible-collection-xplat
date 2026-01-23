@@ -19,7 +19,7 @@
       assert:
         that:
           - hostname_stat.stat.exists | bool
-          - hostname_stat.stat.isfile | bool
+          - hostname_stat.stat.isreg | bool
           - hostname_stat.stat.path == '/etc/hostname'
         fail_msg: "Expected /etc/hostname to exist and be a file"
       when:

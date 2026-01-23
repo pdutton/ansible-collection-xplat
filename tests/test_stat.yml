@@ -1,0 +1,66 @@
+---
+- name: Test pdutton.xplat.stat plugin
+  hosts: localhost
+  gather_facts: true
+
+  tasks:
+    - name: Test stat on /etc/hostname
+      pdutton.xplat.stat:
+        path: /etc/hostname
+      register: hostname_stat
+      ignore_errors: true
+
+    - name: Show result for /etc/hostname
+      debug:
+        var: hostname_stat
+      when: hostname_stat is defined
+
+    - name: Verify file exists on Unix-like systems
+      assert:
+        that:
+          - hostname_stat.stat.exists | bool
+          - hostname_stat.stat.isreg | bool
+          - hostname_stat.stat.path == '/etc/hostname'
+        fail_msg: "Expected /etc/hostname to exist and be a file"
+      when:
+        - ansible_os_family != 'Windows'
+        - hostname_stat is not failed
+
+    - name: Test stat on a directory
+      pdutton.xplat.stat:
+        path: /tmp
+      register: tmp_stat
+      ignore_errors: true
+
+    - name: Show result for /tmp
+      debug:
+        var: tmp_stat
+      when: tmp_stat is defined
+
+    - name: Verify /tmp is a directory on Unix-like systems
+      assert:
+        that:
+          - tmp_stat.stat.exists | bool
+          - tmp_stat.stat.isdir | bool
+        fail_msg: "Expected /tmp to exist and be a directory"
+      when:
+        - ansible_os_family != 'Windows'
+        - tmp_stat is not failed
+
+    - name: Test stat on non-existent file
+      pdutton.xplat.stat:
+        path: /nonexistent/path/to/file
+      register: nonexistent_stat
+      ignore_errors: true
+
+    - name: Show result for non-existent file
+      debug:
+        var: nonexistent_stat
+      when: nonexistent_stat is defined
+
+    - name: Verify non-existent file doesn't exist
+      assert:
+        that:
+          - not (nonexistent_stat.stat.exists | bool)
+        fail_msg: "Expected non-existent path to not exist"
+      when: nonexistent_stat is not failed

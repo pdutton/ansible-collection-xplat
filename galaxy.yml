@@ -1,0 +1,17 @@
+---
+namespace: pdutton
+name: xplat
+version: 1.0.0
+description: Cross-platform Ansible collection for multi-OS operations
+license:
+  - GPL-3.0-or-later
+authors:
+  - Paul Dutton
+repository: https://github.com/pdutton/ansible-collection-xplat
+documentation: https://github.com/pdutton/ansible-collection-xplat
+readme: README.md
+tags:
+  - cross-platform
+  - windows
+  - linux
+  - macos

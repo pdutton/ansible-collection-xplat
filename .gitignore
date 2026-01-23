@@ -1,0 +1,32 @@
+# Build artifacts
+*.tar.gz
+MANIFEST.json
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+venv/
+ENV/
+env/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Ansible
+.ansible/
+*.retry
+
+# Local testing
+.pytest_cache/
+htmlcov/
+.coverage

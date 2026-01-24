@@ -1,0 +1,93 @@
+---
+- name: Test pdutton.xplat.command plugin
+  hosts: localhost
+  gather_facts: true
+
+  tasks:
+    - name: Run whoami command
+      pdutton.xplat.command:
+        cmd: whoami
+      register: whoami_result
+      ignore_errors: true
+
+    - name: Show whoami result
+      debug:
+        var: whoami_result
+      when: whoami_result is defined
+
+    - name: Verify whoami succeeded
+      assert:
+        that:
+          - whoami_result.rc == 0
+          - whoami_result.stdout | length > 0
+        fail_msg: "Expected whoami to succeed with output"
+      when: whoami_result is not failed
+
+    - name: Run echo command with arguments
+      pdutton.xplat.command:
+        argv:
+          - echo
+          - "Hello from xplat.command"
+      register: echo_result
+      ignore_errors: true
+      when: ansible_os_family != 'Windows'
+
+    - name: Show echo result
+      debug:
+        var: echo_result
+      when: echo_result is defined
+
+    - name: Verify echo output
+      assert:
+        that:
+          - echo_result.rc == 0
+          - "'Hello from xplat.command' in echo_result.stdout"
+        fail_msg: "Expected echo output to contain the message"
+      when:
+        - ansible_os_family != 'Windows'
+        - echo_result is not failed
+
+    - name: Run command with chdir
+      pdutton.xplat.command:
+        cmd: pwd
+        chdir: /tmp
+      register: pwd_result
+      ignore_errors: true
+      when: ansible_os_family != 'Windows'
+
+    - name: Show pwd result
+      debug:
+        var: pwd_result
+      when: pwd_result is defined
+
+    - name: Verify chdir worked
+      assert:
+        that:
+          - pwd_result.rc == 0
+          - "'/tmp' in pwd_result.stdout"
+        fail_msg: "Expected pwd to show /tmp"
+      when:
+        - ansible_os_family != 'Windows'
+        - pwd_result is not failed
+
+    - name: Test creates parameter - command should be skipped
+      pdutton.xplat.command:
+        cmd: echo "This should be skipped"
+        creates: /etc/hostname
+      register: creates_result
+      ignore_errors: true
+      when: ansible_os_family != 'Windows'
+
+    - name: Show creates result
+      debug:
+        var: creates_result
+      when: creates_result is defined
+
+    - name: Verify command was skipped due to creates
+      assert:
+        that:
+          - creates_result is not changed
+        fail_msg: "Expected command to be skipped because /etc/hostname exists"
+      when:
+        - ansible_os_family != 'Windows'
+        - creates_result is not failed

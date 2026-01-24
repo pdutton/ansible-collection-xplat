@@ -53,3 +53,84 @@ The plugin automatically detects the target platform and delegates to:
 - `ansible.windows.win_stat` on Windows
 
 All parameters supported by the underlying modules are passed through transparently.
+
+### Using pdutton.xplat.copy
+
+The `copy` plugin copies files to remote locations across different platforms:
+
+```yaml
+- name: Copy file with content
+  pdutton.xplat.copy:
+    content: "Hello World\n"
+    dest: /tmp/hello.txt
+
+- name: Copy a local file to remote
+  pdutton.xplat.copy:
+    src: /local/path/myfile.conf
+    dest: /etc/myapp/myfile.conf
+    owner: root
+    group: root
+    mode: '0644'
+```
+
+The plugin automatically detects the target platform and delegates to:
+- `ansible.builtin.copy` on Linux and macOS
+- `ansible.windows.win_copy` on Windows
+
+### Using pdutton.xplat.command
+
+The `command` plugin executes commands on targets across different platforms:
+
+```yaml
+- name: Run a simple command
+  pdutton.xplat.command:
+    cmd: whoami
+  register: result
+
+- name: Run command with arguments as list
+  pdutton.xplat.command:
+    argv:
+      - /usr/bin/python3
+      - --version
+
+- name: Run command only if file does not exist
+  pdutton.xplat.command:
+    cmd: touch /tmp/myfile
+    creates: /tmp/myfile
+```
+
+The plugin automatically detects the target platform and delegates to:
+- `ansible.builtin.command` on Linux and macOS
+- `ansible.windows.win_command` on Windows
+
+### Using pdutton.xplat.file
+
+The `file` plugin manages files and file properties across different platforms:
+
+```yaml
+- name: Create a directory
+  pdutton.xplat.file:
+    path: /etc/myapp
+    state: directory
+    mode: '0755'
+
+- name: Touch a file
+  pdutton.xplat.file:
+    path: /tmp/myfile.txt
+    state: touch
+
+- name: Remove a file
+  pdutton.xplat.file:
+    path: /tmp/old_file.txt
+    state: absent
+
+- name: Create a symbolic link
+  pdutton.xplat.file:
+    src: /etc/myapp/current.conf
+    path: /etc/myapp/myapp.conf
+    state: link
+```
+
+The plugin automatically detects the target platform and delegates to:
+- `ansible.builtin.file` on Linux and macOS
+- `ansible.windows.win_file` on Windows

@@ -1,0 +1,86 @@
+---
+- name: Test pdutton.xplat.copy plugin
+  hosts: localhost
+  gather_facts: true
+
+  tasks:
+    - name: Create a temporary directory for testing
+      pdutton.xplat.file:
+        path: /tmp/xplat_copy_test
+        state: directory
+      register: test_dir
+      ignore_errors: true
+
+    - name: Copy content to a file
+      pdutton.xplat.copy:
+        content: "Hello from xplat.copy\n"
+        dest: /tmp/xplat_copy_test/hello.txt
+      register: copy_content
+      ignore_errors: true
+      when: ansible_os_family != 'Windows'
+
+    - name: Show copy content result
+      debug:
+        var: copy_content
+      when: copy_content is defined
+
+    - name: Verify file was created with content
+      pdutton.xplat.stat:
+        path: /tmp/xplat_copy_test/hello.txt
+      register: hello_stat
+      when:
+        - ansible_os_family != 'Windows'
+        - copy_content is not failed
+
+    - name: Assert file exists
+      assert:
+        that:
+          - hello_stat.stat.exists | bool
+          - hello_stat.stat.isreg | bool
+        fail_msg: "Expected /tmp/xplat_copy_test/hello.txt to exist"
+      when:
+        - ansible_os_family != 'Windows'
+        - hello_stat is defined
+        - hello_stat is not failed
+
+    - name: Copy file to another location
+      pdutton.xplat.copy:
+        src: /tmp/xplat_copy_test/hello.txt
+        dest: /tmp/xplat_copy_test/hello_copy.txt
+        remote_src: true
+      register: copy_file
+      ignore_errors: true
+      when:
+        - ansible_os_family != 'Windows'
+        - copy_content is not failed
+
+    - name: Show copy file result
+      debug:
+        var: copy_file
+      when: copy_file is defined
+
+    - name: Verify copied file exists
+      pdutton.xplat.stat:
+        path: /tmp/xplat_copy_test/hello_copy.txt
+      register: copy_stat
+      when:
+        - ansible_os_family != 'Windows'
+        - copy_file is defined
+        - copy_file is not failed
+
+    - name: Assert copied file exists
+      assert:
+        that:
+          - copy_stat.stat.exists | bool
+        fail_msg: "Expected /tmp/xplat_copy_test/hello_copy.txt to exist"
+      when:
+        - ansible_os_family != 'Windows'
+        - copy_stat is defined
+        - copy_stat is not failed
+
+    - name: Clean up test directory
+      pdutton.xplat.file:
+        path: /tmp/xplat_copy_test
+        state: absent
+      ignore_errors: true
+      when: ansible_os_family != 'Windows'

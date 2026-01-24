@@ -1,6 +1,6 @@
 # Ansible Collection: XPlat
 
-The pdutton.xplat collection provides cross platform functionality Ansible.
+The pdutton.xplat collection provides cross platform functionality for Ansible.
 
 ## What is included
 

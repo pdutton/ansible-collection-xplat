@@ -30,6 +30,9 @@ uninstall:
 test:
 	@echo "Running integration tests..."
 	ansible-playbook tests/test_stat.yml
+	ansible-playbook tests/test_copy.yml
+	ansible-playbook tests/test_command.yml
+	ansible-playbook tests/test_file.yml
 
 clean:
 	@echo "Cleaning build artifacts..."

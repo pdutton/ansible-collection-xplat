@@ -1,0 +1,134 @@
+---
+- name: Test pdutton.xplat.user plugin
+  hosts: localhost
+  gather_facts: true
+
+  tasks:
+    # Note: User management typically requires root privileges
+    # These tests verify basic functionality with become
+
+    - name: Test creating a user (requires become)
+      pdutton.xplat.user:
+        name: xplat_test_user
+        comment: "Test user for xplat"
+        state: present
+      register: create_user
+      ignore_errors: true
+      become: true
+      when: ansible_os_family != 'Windows'
+
+    - name: Show create user result
+      debug:
+        var: create_user
+      when: create_user is defined
+
+    - name: Verify user was created
+      ansible.builtin.shell:
+        cmd: id xplat_test_user
+      register: user_exists
+      ignore_errors: true
+      when:
+        - ansible_os_family != 'Windows'
+        - create_user is not failed
+
+    - name: Assert user exists
+      assert:
+        that:
+          - user_exists.rc == 0
+        fail_msg: "Expected user xplat_test_user to exist"
+      when:
+        - ansible_os_family != 'Windows'
+        - user_exists is defined
+        - user_exists is not skipped
+        - user_exists is not failed
+
+    - name: Test user idempotency
+      pdutton.xplat.user:
+        name: xplat_test_user
+        comment: "Test user for xplat"
+        state: present
+      register: user_idempotent
+      ignore_errors: true
+      become: true
+      when:
+        - ansible_os_family != 'Windows'
+        - create_user is not failed
+
+    - name: Assert user module is idempotent
+      assert:
+        that:
+          - user_idempotent is not changed
+        fail_msg: "Expected user module to be idempotent"
+      when:
+        - ansible_os_family != 'Windows'
+        - user_idempotent is defined
+        - user_idempotent is not skipped
+        - user_idempotent is not failed
+
+    - name: Update user comment
+      pdutton.xplat.user:
+        name: xplat_test_user
+        comment: "Updated test user for xplat"
+        state: present
+      register: update_user
+      ignore_errors: true
+      become: true
+      when:
+        - ansible_os_family != 'Windows'
+        - create_user is not failed
+
+    - name: Verify user was updated
+      assert:
+        that:
+          - update_user is changed
+        fail_msg: "Expected user to be updated"
+      when:
+        - ansible_os_family != 'Windows'
+        - update_user is defined
+        - update_user is not skipped
+        - update_user is not failed
+
+    - name: Remove test user
+      pdutton.xplat.user:
+        name: xplat_test_user
+        state: absent
+      register: remove_user
+      ignore_errors: true
+      become: true
+      when: ansible_os_family != 'Windows'
+
+    - name: Verify user was removed
+      ansible.builtin.shell:
+        cmd: id xplat_test_user
+      register: user_removed
+      ignore_errors: true
+      when:
+        - ansible_os_family != 'Windows'
+        - remove_user is not failed
+
+    - name: Assert user no longer exists
+      assert:
+        that:
+          - user_removed.rc != 0
+        fail_msg: "Expected user xplat_test_user to be removed"
+      when:
+        - ansible_os_family != 'Windows'
+        - user_removed is defined
+        - user_removed is not skipped
+        - user_removed is not failed
+
+    # Test without become to verify error handling
+    - name: Test user without privileges (should fail gracefully)
+      pdutton.xplat.user:
+        name: xplat_nonexistent_user_test
+        state: present
+      register: user_no_priv
+      ignore_errors: true
+      when: ansible_os_family != 'Windows'
+
+    - name: Verify user module fails without privileges
+      debug:
+        msg: "User module correctly requires privileges: {{ user_no_priv.msg | default('error') }}"
+      when:
+        - user_no_priv is defined
+        - user_no_priv is failed

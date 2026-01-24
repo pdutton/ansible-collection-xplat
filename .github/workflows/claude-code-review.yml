@@ -13,11 +13,26 @@ on:
         type: number
 
 jobs:
+  # Manual trigger: post a comment to trigger the review via issue_comment event
+  trigger-review:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Trigger Claude review via comment
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr comment ${{ inputs.pr_number }} \
+            --repo ${{ github.repository }} \
+            --body "@claude review this PR"
+
+  # Automatic trigger: run on PR events or @claude comments
   claude-review:
     if: |
       (github.event_name == 'pull_request') ||
-      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
-      (github.event_name == 'workflow_dispatch')
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude'))
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -35,7 +50,6 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           trigger_phrase: "@claude"
-          pull_number: ${{ github.event.inputs.pr_number || github.event.pull_request.number || github.event.issue.number }}
           prompt: |
             Review this pull request. Focus on:
             - Code correctness and potential bugs

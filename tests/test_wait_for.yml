@@ -1,0 +1,131 @@
+---
+- name: Test pdutton.xplat.wait_for plugin
+  hosts: localhost
+  gather_facts: true
+
+  tasks:
+    - name: Create a test file for wait_for
+      pdutton.xplat.copy:
+        content: "Initial content\n"
+        dest: /tmp/xplat_wait_for_test.txt
+      ignore_errors: true
+      when: ansible_os_family != 'Windows'
+
+    - name: Wait for file to exist (should succeed immediately)
+      pdutton.xplat.wait_for:
+        path: /tmp/xplat_wait_for_test.txt
+        state: present
+        timeout: 5
+      register: wait_file
+      ignore_errors: true
+      when: ansible_os_family != 'Windows'
+
+    - name: Show wait for file result
+      debug:
+        var: wait_file
+      when: wait_file is defined
+
+    - name: Verify wait_for file succeeded
+      assert:
+        that:
+          - wait_file is not failed
+          - wait_file.elapsed is defined
+        fail_msg: "Expected wait_for to find the file"
+      when:
+        - ansible_os_family != 'Windows'
+        - wait_file is defined
+
+    - name: Add content with search pattern
+      pdutton.xplat.copy:
+        content: |
+          Initial content
+          READY: Application started
+          More content
+        dest: /tmp/xplat_wait_for_test.txt
+      ignore_errors: true
+      when: ansible_os_family != 'Windows'
+
+    - name: Wait for search pattern in file
+      pdutton.xplat.wait_for:
+        path: /tmp/xplat_wait_for_test.txt
+        search_regex: "READY.*started"
+        timeout: 5
+      register: wait_pattern
+      ignore_errors: true
+      when: ansible_os_family != 'Windows'
+
+    - name: Verify wait_for pattern succeeded
+      assert:
+        that:
+          - wait_pattern is not failed
+        fail_msg: "Expected wait_for to find the pattern"
+      when:
+        - ansible_os_family != 'Windows'
+        - wait_pattern is defined
+
+    - name: Wait for localhost port 22 (SSH - commonly open)
+      pdutton.xplat.wait_for:
+        host: 127.0.0.1
+        port: 22
+        state: started
+        timeout: 5
+      register: wait_port
+      ignore_errors: true
+      when: ansible_os_family != 'Windows'
+
+    - name: Show wait for port result
+      debug:
+        var: wait_port
+      when: wait_port is defined
+
+    # Note: Port 22 might not always be available, so we don't assert success
+
+    - name: Wait for non-existent file with short timeout (should fail)
+      pdutton.xplat.wait_for:
+        path: /tmp/xplat_nonexistent_file_12345.txt
+        state: present
+        timeout: 2
+      register: wait_fail
+      ignore_errors: true
+      when: ansible_os_family != 'Windows'
+
+    - name: Verify wait_for times out for missing file
+      assert:
+        that:
+          - wait_fail is failed
+        fail_msg: "Expected wait_for to timeout for missing file"
+      when:
+        - ansible_os_family != 'Windows'
+        - wait_fail is defined
+
+    - name: Wait for file to be absent
+      pdutton.xplat.file:
+        path: /tmp/xplat_wait_for_absent.txt
+        state: absent
+      ignore_errors: true
+      when: ansible_os_family != 'Windows'
+
+    - name: Wait for file to be absent (should succeed immediately)
+      pdutton.xplat.wait_for:
+        path: /tmp/xplat_wait_for_absent.txt
+        state: absent
+        timeout: 5
+      register: wait_absent
+      ignore_errors: true
+      when: ansible_os_family != 'Windows'
+
+    - name: Verify wait_for absent succeeded
+      assert:
+        that:
+          - wait_absent is not failed
+        fail_msg: "Expected wait_for absent to succeed"
+      when:
+        - ansible_os_family != 'Windows'
+        - wait_absent is defined
+
+    - name: Clean up test file
+      pdutton.xplat.file:
+        path: /tmp/xplat_wait_for_test.txt
+        state: absent
+      ignore_errors: true
+      when: ansible_os_family != 'Windows'

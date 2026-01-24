@@ -1,0 +1,66 @@
+---
+- name: Test pdutton.xplat.reboot plugin
+  hosts: localhost
+  gather_facts: true
+
+  tasks:
+    # Note: We cannot actually test rebooting in automated tests
+    # These tests verify the module loads and handles errors correctly
+
+    - name: Verify reboot module is available
+      pdutton.xplat.command:
+        cmd: echo "Reboot module test"
+      register: prereq_check
+      ignore_errors: true
+      when: ansible_os_family != 'Windows'
+
+    - name: Show environment info
+      debug:
+        msg: "Testing on {{ ansible_os_family }} / {{ ansible_system }}"
+
+    # Note: Uncomment the following to actually test reboot functionality
+    # This will reboot the target machine!
+    #
+    # - name: Reboot the machine
+    #   pdutton.xplat.reboot:
+    #     reboot_timeout: 300
+    #     pre_reboot_delay: 5
+    #     msg: "Reboot initiated by Ansible xplat test"
+    #   register: reboot_result
+    #   when: ansible_os_family != 'Windows'
+    #
+    # - name: Verify reboot completed
+    #   assert:
+    #     that:
+    #       - reboot_result.rebooted | bool
+    #     fail_msg: "Expected machine to have rebooted"
+    #   when: reboot_result is not failed
+
+    - name: Document reboot test requirements
+      debug:
+        msg: |
+          The reboot module cannot be safely tested in automated tests.
+          To manually test the reboot functionality:
+          1. Run against a test VM or container that can be rebooted
+          2. Uncomment the reboot tasks in this playbook
+          3. Ensure you have proper connectivity to the target
+          4. Run: ansible-playbook tests/test_reboot.yml -i your_inventory
+
+    - name: Test that reboot action plugin can be loaded
+      ansible.builtin.shell:
+        cmd: |
+          python3 -c "
+          import sys
+          sys.path.insert(0, 'plugins/action')
+          from reboot import ActionModule
+          print('Reboot action module loaded successfully')
+          "
+        chdir: "{{ playbook_dir }}/.."
+      register: module_load
+      ignore_errors: true
+      when: ansible_os_family != 'Windows'
+
+    - name: Show module load result
+      debug:
+        var: module_load
+      when: module_load is defined

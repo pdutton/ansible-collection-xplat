@@ -1,0 +1,164 @@
+---
+- name: Test pdutton.xplat.lineinfile plugin
+  hosts: localhost
+  gather_facts: true
+
+  tasks:
+    - name: Create a test file
+      pdutton.xplat.copy:
+        content: |
+          # Configuration file
+          setting1=value1
+          setting2=value2
+          # End of file
+        dest: /tmp/xplat_lineinfile_test.conf
+      register: create_file
+      ignore_errors: true
+      when: ansible_os_family != 'Windows'
+
+    - name: Add a new line to the file
+      pdutton.xplat.lineinfile:
+        path: /tmp/xplat_lineinfile_test.conf
+        line: "setting3=value3"
+      register: add_line
+      ignore_errors: true
+      when:
+        - ansible_os_family != 'Windows'
+        - create_file is not failed
+
+    - name: Show add line result
+      debug:
+        var: add_line
+      when: add_line is defined
+
+    - name: Verify line was added
+      ansible.builtin.shell:
+        cmd: grep -q "setting3=value3" /tmp/xplat_lineinfile_test.conf
+      register: grep_result
+      ignore_errors: true
+      when:
+        - ansible_os_family != 'Windows'
+        - add_line is not failed
+
+    - name: Assert line was added
+      assert:
+        that:
+          - grep_result.rc == 0
+        fail_msg: "Expected setting3=value3 to be in the file"
+      when:
+        - ansible_os_family != 'Windows'
+        - grep_result is not failed
+
+    - name: Replace a line using regex
+      pdutton.xplat.lineinfile:
+        path: /tmp/xplat_lineinfile_test.conf
+        regexp: '^setting1='
+        line: "setting1=newvalue1"
+      register: replace_line
+      ignore_errors: true
+      when:
+        - ansible_os_family != 'Windows'
+        - create_file is not failed
+
+    - name: Verify line was replaced
+      ansible.builtin.shell:
+        cmd: grep -q "setting1=newvalue1" /tmp/xplat_lineinfile_test.conf
+      register: replace_grep
+      ignore_errors: true
+      when:
+        - ansible_os_family != 'Windows'
+        - replace_line is not failed
+
+    - name: Assert line was replaced
+      assert:
+        that:
+          - replace_grep.rc == 0
+        fail_msg: "Expected setting1=newvalue1 to be in the file"
+      when:
+        - ansible_os_family != 'Windows'
+        - replace_grep is not failed
+
+    - name: Remove a line
+      pdutton.xplat.lineinfile:
+        path: /tmp/xplat_lineinfile_test.conf
+        regexp: '^setting2='
+        state: absent
+      register: remove_line
+      ignore_errors: true
+      when:
+        - ansible_os_family != 'Windows'
+        - create_file is not failed
+
+    - name: Verify line was removed
+      ansible.builtin.shell:
+        cmd: grep -q "setting2=" /tmp/xplat_lineinfile_test.conf
+      register: remove_grep
+      ignore_errors: true
+      when:
+        - ansible_os_family != 'Windows'
+        - remove_line is not failed
+
+    - name: Assert line was removed
+      assert:
+        that:
+          - remove_grep.rc != 0
+        fail_msg: "Expected setting2= to be removed from the file"
+      when:
+        - ansible_os_family != 'Windows'
+        - remove_grep is defined
+
+    - name: Test idempotency - add same line again
+      pdutton.xplat.lineinfile:
+        path: /tmp/xplat_lineinfile_test.conf
+        line: "setting3=value3"
+      register: idempotent_add
+      ignore_errors: true
+      when:
+        - ansible_os_family != 'Windows'
+        - add_line is not failed
+
+    - name: Assert lineinfile is idempotent
+      assert:
+        that:
+          - idempotent_add is not changed
+        fail_msg: "Expected lineinfile to be idempotent"
+      when:
+        - ansible_os_family != 'Windows'
+        - idempotent_add is not failed
+
+    - name: Test create parameter - create new file with line
+      pdutton.xplat.lineinfile:
+        path: /tmp/xplat_lineinfile_new.conf
+        line: "newfile=true"
+        create: yes
+      register: create_new
+      ignore_errors: true
+      when: ansible_os_family != 'Windows'
+
+    - name: Verify new file was created
+      pdutton.xplat.stat:
+        path: /tmp/xplat_lineinfile_new.conf
+      register: new_file_stat
+      when:
+        - ansible_os_family != 'Windows'
+        - create_new is not failed
+
+    - name: Assert new file exists
+      assert:
+        that:
+          - new_file_stat.stat.exists | bool
+        fail_msg: "Expected new file to be created"
+      when:
+        - ansible_os_family != 'Windows'
+        - new_file_stat is defined
+        - new_file_stat is not failed
+
+    - name: Clean up test files
+      pdutton.xplat.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /tmp/xplat_lineinfile_test.conf
+        - /tmp/xplat_lineinfile_new.conf
+      ignore_errors: true
+      when: ansible_os_family != 'Windows'

@@ -4,8 +4,8 @@ The pdutton.xplat collection provides cross platform functionality Ansible.
 
 ## What is included
 
-Initially this collecton will provide cross platform plugins for basic tasks that require different modules
-on different operating sytems.
+Initially this collection will provide cross platform plugins for basic tasks that require different modules
+on different operating systems.
 
 Included plugins:
     - pdutton.xplat.copy to call ansible.builtin.copy or ansible.windows.win_copy

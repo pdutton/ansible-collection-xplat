@@ -5,30 +5,8 @@ on:
     types: [opened, synchronize, reopened]
   issue_comment:
     types: [created]
-  workflow_dispatch:
-    inputs:
-      pr_number:
-        description: 'Pull request number to review'
-        required: true
-        type: number
 
 jobs:
-  # Manual trigger: post a comment to trigger the review via issue_comment event
-  trigger-review:
-    if: github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
-    permissions:
-      pull-requests: write
-    steps:
-      - name: Trigger Claude review via comment
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh pr comment ${{ inputs.pr_number }} \
-            --repo ${{ github.repository }} \
-            --body "@claude review this PR"
-
-  # Automatic trigger: run on PR events or @claude comments
   claude-review:
     if: |
       (github.event_name == 'pull_request') ||

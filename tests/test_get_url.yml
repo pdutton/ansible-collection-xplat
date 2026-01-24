@@ -1,0 +1,98 @@
+---
+- name: Test pdutton.xplat.get_url plugin
+  hosts: localhost
+  gather_facts: true
+
+  tasks:
+    - name: Create a temporary directory for testing
+      pdutton.xplat.file:
+        path: /tmp/xplat_get_url_test
+        state: directory
+      register: test_dir
+      ignore_errors: true
+      when: ansible_os_family != 'Windows'
+
+    - name: Download a file from the internet
+      pdutton.xplat.get_url:
+        url: https://httpbin.org/robots.txt
+        dest: /tmp/xplat_get_url_test/robots.txt
+      register: get_url_result
+      ignore_errors: true
+      when: ansible_os_family != 'Windows'
+
+    - name: Show get_url result
+      debug:
+        var: get_url_result
+      when: get_url_result is defined
+
+    - name: Verify file was downloaded
+      pdutton.xplat.stat:
+        path: /tmp/xplat_get_url_test/robots.txt
+      register: download_stat
+      when:
+        - ansible_os_family != 'Windows'
+        - get_url_result is not failed
+
+    - name: Assert downloaded file exists
+      assert:
+        that:
+          - download_stat.stat.exists | bool
+          - download_stat.stat.size > 0
+        fail_msg: "Expected robots.txt to be downloaded with content"
+      when:
+        - ansible_os_family != 'Windows'
+        - download_stat is defined
+        - download_stat is not failed
+
+    - name: Download again with force=no - should not change
+      pdutton.xplat.get_url:
+        url: https://httpbin.org/robots.txt
+        dest: /tmp/xplat_get_url_test/robots.txt
+        force: no
+      register: get_url_idempotent
+      ignore_errors: true
+      when:
+        - ansible_os_family != 'Windows'
+        - get_url_result is not failed
+
+    - name: Verify get_url is idempotent with force=no
+      assert:
+        that:
+          - get_url_idempotent is not changed
+        fail_msg: "Expected get_url to not re-download with force=no"
+      when:
+        - ansible_os_family != 'Windows'
+        - get_url_idempotent is not failed
+
+    - name: Download JSON data
+      pdutton.xplat.get_url:
+        url: https://httpbin.org/json
+        dest: /tmp/xplat_get_url_test/data.json
+      register: json_result
+      ignore_errors: true
+      when: ansible_os_family != 'Windows'
+
+    - name: Verify JSON file was downloaded
+      pdutton.xplat.stat:
+        path: /tmp/xplat_get_url_test/data.json
+      register: json_stat
+      when:
+        - ansible_os_family != 'Windows'
+        - json_result is not failed
+
+    - name: Assert JSON file exists
+      assert:
+        that:
+          - json_stat.stat.exists | bool
+        fail_msg: "Expected data.json to be downloaded"
+      when:
+        - ansible_os_family != 'Windows'
+        - json_stat is defined
+        - json_stat is not failed
+
+    - name: Clean up test directory
+      pdutton.xplat.file:
+        path: /tmp/xplat_get_url_test
+        state: absent
+      ignore_errors: true
+      when: ansible_os_family != 'Windows'

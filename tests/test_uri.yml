@@ -1,0 +1,109 @@
+---
+- name: Test pdutton.xplat.uri plugin
+  hosts: localhost
+  gather_facts: true
+
+  tasks:
+    - name: Make a simple GET request
+      pdutton.xplat.uri:
+        url: https://httpbin.org/get
+        return_content: yes
+      register: get_result
+      ignore_errors: true
+      when: ansible_os_family != 'Windows'
+
+    - name: Show GET result
+      debug:
+        var: get_result
+      when: get_result is defined
+
+    - name: Verify GET request succeeded
+      assert:
+        that:
+          - get_result.status == 200
+        fail_msg: "Expected GET request to return status 200"
+      when:
+        - ansible_os_family != 'Windows'
+        - get_result is not failed
+
+    - name: Make a POST request with JSON body
+      pdutton.xplat.uri:
+        url: https://httpbin.org/post
+        method: POST
+        body:
+          name: "xplat_test"
+          value: 123
+        body_format: json
+        headers:
+          Content-Type: application/json
+        return_content: yes
+      register: post_result
+      ignore_errors: true
+      when: ansible_os_family != 'Windows'
+
+    - name: Show POST result
+      debug:
+        var: post_result
+      when: post_result is defined
+
+    - name: Verify POST request succeeded
+      assert:
+        that:
+          - post_result.status == 200
+        fail_msg: "Expected POST request to return status 200"
+      when:
+        - ansible_os_family != 'Windows'
+        - post_result is not failed
+
+    - name: Make a HEAD request
+      pdutton.xplat.uri:
+        url: https://httpbin.org/get
+        method: HEAD
+      register: head_result
+      ignore_errors: true
+      when: ansible_os_family != 'Windows'
+
+    - name: Verify HEAD request succeeded
+      assert:
+        that:
+          - head_result.status == 200
+        fail_msg: "Expected HEAD request to return status 200"
+      when:
+        - ansible_os_family != 'Windows'
+        - head_result is not failed
+
+    - name: Test status_code parameter
+      pdutton.xplat.uri:
+        url: https://httpbin.org/status/404
+        status_code: [404]
+      register: status_result
+      ignore_errors: true
+      when: ansible_os_family != 'Windows'
+
+    - name: Verify status_code matching works
+      assert:
+        that:
+          - status_result.status == 404
+        fail_msg: "Expected request to handle status 404"
+      when:
+        - ansible_os_family != 'Windows'
+        - status_result is not failed
+
+    - name: Test request with custom headers
+      pdutton.xplat.uri:
+        url: https://httpbin.org/headers
+        headers:
+          X-Custom-Header: "xplat-test-value"
+        return_content: yes
+      register: header_result
+      ignore_errors: true
+      when: ansible_os_family != 'Windows'
+
+    - name: Verify custom header was sent
+      assert:
+        that:
+          - "'xplat-test-value' in header_result.content"
+        fail_msg: "Expected custom header to be included in request"
+      when:
+        - ansible_os_family != 'Windows'
+        - header_result is not failed

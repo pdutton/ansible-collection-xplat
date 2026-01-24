@@ -12,7 +12,7 @@ class ActionModule(ActionBase):
 
     Abstracts differences between ansible.builtin.shell (Linux/Mac) and
     ansible.windows.win_shell (Windows) by detecting the target OS and
-    delegating to the appropriate module.
+    delegating to the appropriate action plugin.
     """
 
     TRANSFERS_FILES = False
@@ -41,28 +41,31 @@ class ActionModule(ActionBase):
         os_family = task_vars.get('ansible_os_family', '').lower()
         system = task_vars.get('ansible_system', '').lower()
 
-        # Determine which module to use
+        # Determine which action plugin to use
         if os_family == 'windows' or system == 'win32nt':
-            # Use Windows shell module
-            module_name = 'ansible.windows.win_shell'
+            action_name = 'ansible.windows.win_shell'
         else:
-            # Use built-in shell module for Linux, macOS, and other Unix variants
-            module_name = 'ansible.builtin.shell'
+            action_name = 'ansible.builtin.shell'
+            # Convert 'cmd' to '_raw_params' for ansible.builtin.shell
+            if 'cmd' in self._task.args and '_raw_params' not in self._task.args:
+                self._task.args['_raw_params'] = self._task.args.pop('cmd')
 
-        # Prepare module arguments - pass through all task arguments
-        module_args = self._task.args.copy()
-
-        # The 'cmd' parameter needs to be converted to '_raw_params' for ansible.builtin.shell
-        # ansible.windows.win_shell supports 'cmd' directly
-        if 'cmd' in module_args and module_name == 'ansible.builtin.shell':
-            module_args['_raw_params'] = module_args.pop('cmd')
-
-        # Execute the appropriate module
-        result = self._execute_module(
-            module_name=module_name,
-            module_args=module_args,
-            task_vars=task_vars,
-            tmp=tmp
+        # Load the appropriate action plugin
+        action_loader = self._shared_loader_obj.action_loader
+        action_plugin = action_loader.get(
+            action_name,
+            task=self._task,
+            connection=self._connection,
+            play_context=self._play_context,
+            loader=self._loader,
+            templar=self._templar,
+            shared_loader_obj=self._shared_loader_obj
         )
+
+        if action_plugin is None:
+            raise AnsibleActionFail(f'Could not load action plugin: {action_name}')
+
+        # Execute the action plugin
+        result = action_plugin.run(tmp=tmp, task_vars=task_vars)
 
         return result

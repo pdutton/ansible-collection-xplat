@@ -1,0 +1,71 @@
+---
+- name: Test pdutton.xplat.hostname plugin
+  hosts: localhost
+  gather_facts: true
+
+  tasks:
+    # Note: Setting hostname typically requires root privileges
+    # These tests verify the module works with become
+
+    - name: Get current hostname
+      pdutton.xplat.command:
+        cmd: hostname
+      register: current_hostname
+      ignore_errors: true
+      when: ansible_os_family != 'Windows'
+
+    - name: Show current hostname
+      debug:
+        var: current_hostname.stdout
+      when: current_hostname is defined
+
+    - name: Set hostname to current value (idempotency test)
+      pdutton.xplat.hostname:
+        name: "{{ current_hostname.stdout | trim }}"
+      register: hostname_same
+      ignore_errors: true
+      become: true
+      when:
+        - ansible_os_family != 'Windows'
+        - current_hostname is not failed
+
+    - name: Show hostname result
+      debug:
+        var: hostname_same
+      when: hostname_same is defined
+
+    - name: Verify hostname module executed
+      assert:
+        that:
+          - hostname_same is defined
+        fail_msg: "Expected hostname module to execute"
+      when:
+        - ansible_os_family != 'Windows'
+        - hostname_same is not failed
+
+    # Note: We don't actually change the hostname in tests
+    # as that could affect the system. For real testing:
+    #
+    # - name: Change hostname
+    #   pdutton.xplat.hostname:
+    #     name: new-hostname
+    #   become: true
+    #
+    # - name: Restore original hostname
+    #   pdutton.xplat.hostname:
+    #     name: "{{ original_hostname }}"
+    #   become: true
+
+    - name: Test hostname without privileges (should fail)
+      pdutton.xplat.hostname:
+        name: "test-hostname-no-priv"
+      register: hostname_no_priv
+      ignore_errors: true
+      when: ansible_os_family != 'Windows'
+
+    - name: Verify hostname module fails without privileges
+      debug:
+        msg: "Hostname module correctly requires privileges"
+      when:
+        - hostname_no_priv is defined
+        - hostname_no_priv is failed

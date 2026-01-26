@@ -1,0 +1,104 @@
+---
+- name: Test pdutton.xplat.dirname filter
+  hosts: localhost
+  gather_facts: false
+
+  tasks:
+    - name: Test Unix-style path
+      set_fact:
+        unix_path_dirname: "{{ '/etc/hostname' | xplat_dirname }}"
+
+    - name: Verify Unix-style path dirname
+      assert:
+        that:
+          - unix_path_dirname == '/etc'
+        fail_msg: "Expected '/etc', got '{{ unix_path_dirname }}'"
+
+    - name: Test Unix file path with multiple components
+      set_fact:
+        unix_file_dirname: "{{ '/usr/local/bin/python3' | xplat_dirname }}"
+
+    - name: Verify Unix file path dirname
+      assert:
+        that:
+          - unix_file_dirname == '/usr/local/bin'
+        fail_msg: "Expected '/usr/local/bin', got '{{ unix_file_dirname }}'"
+
+    - name: Test Windows path with backslashes
+      set_fact:
+        windows_path_dirname: "{{ 'C:\\Windows\\System32\\cmd.exe' | xplat_dirname }}"
+
+    - name: Verify Windows path dirname
+      assert:
+        that:
+          - windows_path_dirname == 'C:\\Windows\\System32'
+        fail_msg: "Expected 'C:\\Windows\\System32', got '{{ windows_path_dirname }}'"
+
+    - name: Test Windows path with forward slashes
+      set_fact:
+        windows_forward_slash_dirname: "{{ 'C:/Users/Admin/Documents/report.pdf' | xplat_dirname }}"
+
+    - name: Verify Windows path with forward slashes dirname
+      assert:
+        that:
+          - windows_forward_slash_dirname == 'C:/Users/Admin/Documents'
+        fail_msg: "Expected 'C:/Users/Admin/Documents', got '{{ windows_forward_slash_dirname }}'"
+
+    - name: Test UNC path
+      set_fact:
+        unc_path_dirname: "{{ '\\\\server\\share\\folder\\document.docx' | xplat_dirname }}"
+
+    - name: Verify UNC path dirname
+      assert:
+        that:
+          - unc_path_dirname == '\\\\server\\share\\folder'
+        fail_msg: "Expected '\\\\server\\share\\folder', got '{{ unc_path_dirname }}'"
+
+    - name: Test single filename without path
+      set_fact:
+        single_filename_dirname: "{{ 'filename.txt' | xplat_dirname }}"
+
+    - name: Verify single filename dirname returns empty string
+      assert:
+        that:
+          - single_filename_dirname == ''
+        fail_msg: "Expected empty string, got '{{ single_filename_dirname }}'"
+
+    - name: Test root Unix path
+      set_fact:
+        root_unix_dirname: "{{ '/file.txt' | xplat_dirname }}"
+
+    - name: Verify root Unix path dirname
+      assert:
+        that:
+          - root_unix_dirname == '/'
+        fail_msg: "Expected '/', got '{{ root_unix_dirname }}'"
+
+    - name: Test Windows drive root
+      set_fact:
+        drive_root_dirname: "{{ 'C:\\file.txt' | xplat_dirname }}"
+
+    - name: Verify Windows drive root dirname
+      assert:
+        that:
+          - drive_root_dirname == 'C:\\'
+        fail_msg: "Expected 'C:\\', got '{{ drive_root_dirname }}'"
+
+    - name: Test empty string
+      set_fact:
+        empty_string_dirname: "{{ '' | xplat_dirname }}"
+
+    - name: Verify empty string returns empty string
+      assert:
+        that:
+          - empty_string_dirname == ''
+        fail_msg: "Expected empty string, got '{{ empty_string_dirname }}'"
+
+    - name: Display test results
+      debug:
+        msg: |
+          All dirname filter tests passed!
+          Unix path: /etc/hostname -> /etc
+          Windows path: C:\Windows\System32\cmd.exe -> C:\Windows\System32
+          UNC path: \\server\share\folder\document.docx -> \\server\share\folder
+          Single filename: filename.txt -> (empty)

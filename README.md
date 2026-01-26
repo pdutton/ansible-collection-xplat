@@ -12,7 +12,12 @@ Included plugins:
     - pdutton.xplat.command to call ansible.builtin.command or ansible.windows.win_command
     - pdutton.xplat.file to call  ansible.builtin.file or ansible.windows.win_file
     - pdutton.xplat.stat to call  ansible.builtin.stat or ansible.windows.win_stat
-    - pdutton.xplat.basename filter to extract path basename from Unix or Windows paths
+
+Included filters (cross-platform path manipulation):
+    - pdutton.xplat.basename - extract path basename from Unix or Windows paths
+    - pdutton.xplat.dirname - extract directory name from Unix or Windows paths
+    - pdutton.xplat.splitext - split path into root and extension
+    - pdutton.xplat.join - join path components using appropriate separator
 
 ## Platforms
 
@@ -77,3 +82,74 @@ The `basename` filter extracts the final component of a path string, automatical
 ```
 
 The filter automatically detects whether the input is a Unix-style or Windows-style path and applies the appropriate basename logic. This makes it useful for processing paths from different sources or when working with cross-platform variables.
+
+### Using pdutton.xplat.dirname
+
+The `dirname` filter extracts the directory portion of a path string:
+
+```yaml
+- name: Extract dirname from a Unix path
+  debug:
+    msg: "{{ '/etc/hostname' | pdutton.xplat.dirname }}"
+  # Output: /etc
+
+- name: Extract dirname from a Windows path
+  debug:
+    msg: "{{ 'C:\\Windows\\System32\\cmd.exe' | pdutton.xplat.dirname }}"
+  # Output: C:\Windows\System32
+
+- name: Extract dirname from a UNC path
+  debug:
+    msg: "{{ '\\\\server\\share\\folder\\file.txt' | pdutton.xplat.dirname }}"
+  # Output: \\server\share\folder
+```
+
+### Using pdutton.xplat.splitext
+
+The `splitext` filter splits a path into root and extension components, returning a list:
+
+```yaml
+- name: Split path into root and extension
+  set_fact:
+    path_parts: "{{ '/var/log/syslog.log' | pdutton.xplat.splitext }}"
+- debug:
+    msg: "Root: {{ path_parts[0] }}, Extension: {{ path_parts[1] }}"
+  # Output: Root: /var/log/syslog, Extension: .log
+
+- name: Split Windows path
+  debug:
+    msg: "{{ 'C:\\Windows\\System32\\cmd.exe' | pdutton.xplat.splitext }}"
+  # Output: ['C:\Windows\System32\cmd', '.exe']
+
+- name: Hidden files are handled correctly
+  debug:
+    msg: "{{ '/home/user/.bashrc' | pdutton.xplat.splitext }}"
+  # Output: ['/home/user/.bashrc', ''] (no extension)
+```
+
+### Using pdutton.xplat.join
+
+The `join` filter combines path components using the appropriate separator:
+
+```yaml
+- name: Join Unix path components
+  debug:
+    msg: "{{ '/home' | pdutton.xplat.join('user', 'documents', 'file.txt') }}"
+  # Output: /home/user/documents/file.txt
+
+- name: Join Windows path components
+  debug:
+    msg: "{{ 'C:\\Windows' | pdutton.xplat.join('System32', 'cmd.exe') }}"
+  # Output: C:\Windows\System32\cmd.exe
+
+- name: Build path from variables
+  vars:
+    base_dir: "/var/log"
+    app_name: "myapp"
+    log_file: "app.log"
+  debug:
+    msg: "{{ base_dir | pdutton.xplat.join(app_name, log_file) }}"
+  # Output: /var/log/myapp/app.log
+```
+
+The path format (Unix or Windows) is determined by the base path (first argument).

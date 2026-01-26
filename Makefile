@@ -29,6 +29,9 @@ test:
 	@echo "Running integration tests..."
 	ansible-playbook tests/test_stat.yml
 	ansible-playbook tests/test_basename.yml
+	ansible-playbook tests/test_dirname.yml
+	ansible-playbook tests/test_splitext.yml
+	ansible-playbook tests/test_join.yml
 
 clean:
 	@echo "Cleaning build artifacts..."

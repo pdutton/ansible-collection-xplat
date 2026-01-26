@@ -6,7 +6,7 @@
   tasks:
     - name: Test Unix-style path with extension
       set_fact:
-        unix_path_splitext: "{{ '/etc/hostname.conf' | xplat_splitext }}"
+        unix_path_splitext: "{{ '/etc/hostname.conf' | pdutton.xplat.splitext }}"
 
     - name: Verify Unix-style path splitext
       assert:
@@ -17,7 +17,7 @@
 
     - name: Test Unix file path without extension
       set_fact:
-        unix_no_ext_splitext: "{{ '/usr/bin/python3' | xplat_splitext }}"
+        unix_no_ext_splitext: "{{ '/usr/bin/python3' | pdutton.xplat.splitext }}"
 
     - name: Verify Unix file without extension
       assert:
@@ -28,7 +28,7 @@
 
     - name: Test Windows path with backslashes
       set_fact:
-        windows_path_splitext: "{{ 'C:\\Windows\\System32\\cmd.exe' | xplat_splitext }}"
+        windows_path_splitext: "{{ 'C:\\Windows\\System32\\cmd.exe' | pdutton.xplat.splitext }}"
 
     - name: Verify Windows path splitext
       assert:
@@ -39,7 +39,7 @@
 
     - name: Test Windows path with forward slashes
       set_fact:
-        windows_forward_slash_splitext: "{{ 'C:/Users/Admin/report.pdf' | xplat_splitext }}"
+        windows_forward_slash_splitext: "{{ 'C:/Users/Admin/report.pdf' | pdutton.xplat.splitext }}"
 
     - name: Verify Windows path with forward slashes splitext
       assert:
@@ -50,7 +50,7 @@
 
     - name: Test UNC path
       set_fact:
-        unc_path_splitext: "{{ '\\\\server\\share\\document.docx' | xplat_splitext }}"
+        unc_path_splitext: "{{ '\\\\server\\share\\document.docx' | pdutton.xplat.splitext }}"
 
     - name: Verify UNC path splitext
       assert:
@@ -61,7 +61,7 @@
 
     - name: Test hidden file (dot file) without extension
       set_fact:
-        hidden_file_splitext: "{{ '/home/user/.bashrc' | xplat_splitext }}"
+        hidden_file_splitext: "{{ '/home/user/.bashrc' | pdutton.xplat.splitext }}"
 
     - name: Verify hidden file splitext (no extension)
       assert:
@@ -72,7 +72,7 @@
 
     - name: Test hidden file with extension
       set_fact:
-        hidden_with_ext_splitext: "{{ '/home/user/.config.bak' | xplat_splitext }}"
+        hidden_with_ext_splitext: "{{ '/home/user/.config.bak' | pdutton.xplat.splitext }}"
 
     - name: Verify hidden file with extension splitext
       assert:
@@ -83,7 +83,7 @@
 
     - name: Test single filename with extension
       set_fact:
-        single_file_splitext: "{{ 'document.txt' | xplat_splitext }}"
+        single_file_splitext: "{{ 'document.txt' | pdutton.xplat.splitext }}"
 
     - name: Verify single filename splitext
       assert:
@@ -94,7 +94,7 @@
 
     - name: Test file with multiple dots
       set_fact:
-        multi_dot_splitext: "{{ '/path/to/archive.tar.gz' | xplat_splitext }}"
+        multi_dot_splitext: "{{ '/path/to/archive.tar.gz' | pdutton.xplat.splitext }}"
 
     - name: Verify file with multiple dots (only last extension)
       assert:
@@ -105,7 +105,7 @@
 
     - name: Test empty string
       set_fact:
-        empty_string_splitext: "{{ '' | xplat_splitext }}"
+        empty_string_splitext: "{{ '' | pdutton.xplat.splitext }}"
 
     - name: Verify empty string returns empty components
       assert:

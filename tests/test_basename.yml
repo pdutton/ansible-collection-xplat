@@ -6,7 +6,7 @@
   tasks:
     - name: Test Unix-style path with xplat_basename filter
       set_fact:
-        unix_path_basename: "{{ '/etc/hostname' | xplat_basename }}"
+        unix_path_basename: "{{ '/etc/hostname' | pdutton.xplat.basename }}"
 
     - name: Verify Unix-style path basename
       assert:
@@ -16,7 +16,7 @@
 
     - name: Test Unix file path
       set_fact:
-        unix_file_basename: "{{ '/usr/bin/python3' | xplat_basename }}"
+        unix_file_basename: "{{ '/usr/bin/python3' | pdutton.xplat.basename }}"
 
     - name: Verify Unix file path basename
       assert:
@@ -26,7 +26,7 @@
 
     - name: Test Windows path with backslashes
       set_fact:
-        windows_path_basename: "{{ 'C:\\Windows\\System32\\cmd.exe' | xplat_basename }}"
+        windows_path_basename: "{{ 'C:\\Windows\\System32\\cmd.exe' | pdutton.xplat.basename }}"
 
     - name: Verify Windows path basename
       assert:
@@ -36,7 +36,7 @@
 
     - name: Test Windows path with forward slashes
       set_fact:
-        windows_forward_slash_basename: "{{ 'C:/Users/Admin/Documents/report.pdf' | xplat_basename }}"
+        windows_forward_slash_basename: "{{ 'C:/Users/Admin/Documents/report.pdf' | pdutton.xplat.basename }}"
 
     - name: Verify Windows path with forward slashes basename
       assert:
@@ -46,7 +46,7 @@
 
     - name: Test UNC path
       set_fact:
-        unc_path_basename: "{{ '\\\\server\\share\\document.docx' | xplat_basename }}"
+        unc_path_basename: "{{ '\\\\server\\share\\document.docx' | pdutton.xplat.basename }}"
 
     - name: Verify UNC path basename
       assert:
@@ -56,7 +56,7 @@
 
     - name: Test Unix path with trailing slash
       set_fact:
-        unix_trailing_slash_basename: "{{ '/path/to/directory/' | xplat_basename }}"
+        unix_trailing_slash_basename: "{{ '/path/to/directory/' | pdutton.xplat.basename }}"
 
     - name: Verify Unix path with trailing slash returns empty string
       assert:
@@ -66,7 +66,7 @@
 
     - name: Test Windows path with trailing backslash
       set_fact:
-        windows_trailing_backslash_basename: "{{ 'C:\\Windows\\System32\\' | xplat_basename }}"
+        windows_trailing_backslash_basename: "{{ 'C:\\Windows\\System32\\\\' | pdutton.xplat.basename }}"
 
     - name: Verify Windows path with trailing backslash returns empty string
       assert:
@@ -76,7 +76,7 @@
 
     - name: Test single filename without path
       set_fact:
-        single_filename_basename: "{{ 'filename.txt' | xplat_basename }}"
+        single_filename_basename: "{{ 'filename.txt' | pdutton.xplat.basename }}"
 
     - name: Verify single filename basename
       assert:
@@ -86,7 +86,7 @@
 
     - name: Test empty string
       set_fact:
-        empty_string_basename: "{{ '' | xplat_basename }}"
+        empty_string_basename: "{{ '' | pdutton.xplat.basename }}"
 
     - name: Verify empty string returns empty string
       assert:
@@ -96,7 +96,7 @@
 
     - name: Test mixed separators (Windows path with mixed slashes)
       set_fact:
-        mixed_separators_basename: "{{ 'C:/foo\\bar/baz.txt' | xplat_basename }}"
+        mixed_separators_basename: "{{ 'C:/foo\\bar/baz.txt' | pdutton.xplat.basename }}"
 
     - name: Verify mixed separators basename
       assert:
@@ -106,7 +106,7 @@
 
     - name: Test absolute Unix path with multiple components
       set_fact:
-        absolute_unix_basename: "{{ '/usr/local/bin/some-script.sh' | xplat_basename }}"
+        absolute_unix_basename: "{{ '/usr/local/bin/some-script.sh' | pdutton.xplat.basename }}"
 
     - name: Verify absolute Unix path basename
       assert:
@@ -116,7 +116,7 @@
 
     - name: Test Windows path with drive letter only
       set_fact:
-        drive_letter_basename: "{{ 'C:\\' | xplat_basename }}"
+        drive_letter_basename: "{{ 'C:\\\\' | pdutton.xplat.basename }}"
 
     - name: Verify drive letter only returns empty string
       assert:

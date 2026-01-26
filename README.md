@@ -27,6 +27,12 @@ Included plugins:
 - `pdutton.xplat.user` - manage user accounts (`ansible.builtin.user` / `ansible.windows.win_user`)
 - `pdutton.xplat.wait_for` - wait for conditions (`ansible.builtin.wait_for` / `ansible.windows.win_wait_for`)
 
+Included filters (cross-platform path manipulation):
+    - pdutton.xplat.basename - extract path basename from Unix or Windows paths
+    - pdutton.xplat.dirname - extract directory name from Unix or Windows paths
+    - pdutton.xplat.splitext - split path into root and extension
+    - pdutton.xplat.join - join path components using appropriate separator
+
 ## Platforms
 
 Linux, Windows, and Mac will initially be supported.
@@ -36,7 +42,7 @@ Linux, Windows, and Mac will initially be supported.
 Install from a git repository using ansible-galaxy:
 
 ```bash
-ansible-galaxy collection install git+https://github.com/pdutton/ansible-collection-xplat.git
+ansible-galaxy collection install git+https://github.com/pdutton/ansible-collection-xplat.git --force
 ```
 
 For additional installation options, see the [Ansible documentation on installing collections from a git repository](https://docs.ansible.com/projects/ansible/latest/collections_guide/collections_installing.html#installing-a-collection-from-a-git-repository).
@@ -68,442 +74,96 @@ The plugin automatically detects the target platform and delegates to:
 
 All parameters supported by the underlying modules are passed through transparently.
 
-### Using pdutton.xplat.copy
+### Using pdutton.xplat.basename
 
-The `copy` plugin copies files to remote locations across different platforms:
-
-```yaml
-- name: Copy file with content
-  pdutton.xplat.copy:
-    content: "Hello World\n"
-    dest: /tmp/hello.txt
-
-- name: Copy a local file to remote
-  pdutton.xplat.copy:
-    src: /local/path/myfile.conf
-    dest: /etc/myapp/myfile.conf
-    owner: root
-    group: root
-    mode: '0644'
-```
-
-The plugin automatically detects the target platform and delegates to:
-- `ansible.builtin.copy` on Linux and macOS
-- `ansible.windows.win_copy` on Windows
-
-### Using pdutton.xplat.command
-
-The `command` plugin executes commands on targets across different platforms:
+The `basename` filter extracts the final component of a path string, automatically handling both Unix and Windows path formats:
 
 ```yaml
-- name: Run a simple command
-  pdutton.xplat.command:
-    cmd: whoami
-  register: result
+- name: Extract basename from a Unix path
+  debug:
+    msg: "{{ '/etc/hostname' | pdutton.xplat.basename }}"
+  # Output: hostname
 
-- name: Run command with arguments as list
-  pdutton.xplat.command:
-    argv:
-      - /usr/bin/python3
-      - --version
+- name: Extract basename from a Windows path
+  debug:
+    msg: "{{ 'C:\\Windows\\System32\\cmd.exe' | pdutton.xplat.basename }}"
+  # Output: cmd.exe
 
-- name: Run command only if file does not exist
-  pdutton.xplat.command:
-    cmd: touch /tmp/myfile
-    creates: /tmp/myfile
+- name: Extract basename from a UNC path
+  debug:
+    msg: "{{ '\\\\server\\share\\file.txt' | pdutton.xplat.basename }}"
+  # Output: file.txt
 ```
 
-The plugin automatically detects the target platform and delegates to:
-- `ansible.builtin.command` on Linux and macOS
-- `ansible.windows.win_command` on Windows
+The filter automatically detects whether the input is a Unix-style or Windows-style path and applies the appropriate basename logic. This makes it useful for processing paths from different sources or when working with cross-platform variables.
 
-### Using pdutton.xplat.file
+### Using pdutton.xplat.dirname
 
-The `file` plugin manages files and file properties across different platforms:
+The `dirname` filter extracts the directory portion of a path string:
 
 ```yaml
-- name: Create a directory
-  pdutton.xplat.file:
-    path: /etc/myapp
-    state: directory
-    mode: '0755'
+- name: Extract dirname from a Unix path
+  debug:
+    msg: "{{ '/etc/hostname' | pdutton.xplat.dirname }}"
+  # Output: /etc
 
-- name: Touch a file
-  pdutton.xplat.file:
-    path: /tmp/myfile.txt
-    state: touch
+- name: Extract dirname from a Windows path
+  debug:
+    msg: "{{ 'C:\\Windows\\System32\\cmd.exe' | pdutton.xplat.dirname }}"
+  # Output: C:\Windows\System32
 
-- name: Remove a file
-  pdutton.xplat.file:
-    path: /tmp/old_file.txt
-    state: absent
-
-- name: Create a symbolic link
-  pdutton.xplat.file:
-    src: /etc/myapp/current.conf
-    path: /etc/myapp/myapp.conf
-    state: link
+- name: Extract dirname from a UNC path
+  debug:
+    msg: "{{ '\\\\server\\share\\folder\\file.txt' | pdutton.xplat.dirname }}"
+  # Output: \\server\share\folder
 ```
 
-The plugin automatically detects the target platform and delegates to:
-- `ansible.builtin.file` on Linux and macOS
-- `ansible.windows.win_file` on Windows
+### Using pdutton.xplat.splitext
 
-### Using pdutton.xplat.find
-
-The `find` plugin returns a list of files based on specific criteria:
+The `splitext` filter splits a path into root and extension components, returning a list:
 
 ```yaml
-- name: Find all .log files in /var/log
-  pdutton.xplat.find:
-    paths: /var/log
-    patterns: '*.log'
+- name: Split path into root and extension
+  set_fact:
+    path_parts: "{{ '/var/log/syslog.log' | pdutton.xplat.splitext }}"
+- debug:
+    msg: "Root: {{ path_parts[0] }}, Extension: {{ path_parts[1] }}"
+  # Output: Root: /var/log/syslog, Extension: .log
 
-- name: Find files older than 1 week
-  pdutton.xplat.find:
-    paths: /tmp
-    age: 1w
-    recurse: yes
+- name: Split Windows path
+  debug:
+    msg: "{{ 'C:\\Windows\\System32\\cmd.exe' | pdutton.xplat.splitext }}"
+  # Output: ['C:\Windows\System32\cmd', '.exe']
 
-- name: Find files larger than 1MB
-  pdutton.xplat.find:
-    paths: /home
-    size: 1m
-    recurse: yes
+- name: Hidden files are handled correctly
+  debug:
+    msg: "{{ '/home/user/.bashrc' | pdutton.xplat.splitext }}"
+  # Output: ['/home/user/.bashrc', ''] (no extension)
 ```
 
-The plugin automatically detects the target platform and delegates to:
-- `ansible.builtin.find` on Linux and macOS
-- `ansible.windows.win_find` on Windows
+### Using pdutton.xplat.join
 
-### Using pdutton.xplat.get_url
-
-The `get_url` plugin downloads files from HTTP, HTTPS, or FTP:
+The `join` filter combines path components using the appropriate separator:
 
 ```yaml
-- name: Download a file
-  pdutton.xplat.get_url:
-    url: https://example.com/file.tar.gz
-    dest: /tmp/file.tar.gz
+- name: Join Unix path components
+  debug:
+    msg: "{{ '/home' | pdutton.xplat.join('user', 'documents', 'file.txt') }}"
+  # Output: /home/user/documents/file.txt
 
-- name: Download with checksum validation
-  pdutton.xplat.get_url:
-    url: https://example.com/file.zip
-    dest: /tmp/file.zip
-    checksum: sha256:abc123def456...
+- name: Join Windows path components
+  debug:
+    msg: "{{ 'C:\\Windows' | pdutton.xplat.join('System32', 'cmd.exe') }}"
+  # Output: C:\Windows\System32\cmd.exe
 
-- name: Download with authentication
-  pdutton.xplat.get_url:
-    url: https://secure.example.com/file.bin
-    dest: /opt/files/file.bin
-    url_username: myuser
-    url_password: mypassword
+- name: Build path from variables
+  vars:
+    base_dir: "/var/log"
+    app_name: "myapp"
+    log_file: "app.log"
+  debug:
+    msg: "{{ base_dir | pdutton.xplat.join(app_name, log_file) }}"
+  # Output: /var/log/myapp/app.log
 ```
 
-The plugin automatically detects the target platform and delegates to:
-- `ansible.builtin.get_url` on Linux and macOS
-- `ansible.windows.win_get_url` on Windows
-
-### Using pdutton.xplat.group
-
-The `group` plugin manages groups:
-
-```yaml
-- name: Create a group
-  pdutton.xplat.group:
-    name: developers
-    state: present
-
-- name: Remove a group
-  pdutton.xplat.group:
-    name: developers
-    state: absent
-
-- name: Create a group with specific GID (Unix)
-  pdutton.xplat.group:
-    name: developers
-    gid: 1500
-```
-
-The plugin automatically detects the target platform and delegates to:
-- `ansible.builtin.group` on Linux and macOS
-- `ansible.windows.win_group` on Windows
-
-### Using pdutton.xplat.hostname
-
-The `hostname` plugin manages the system hostname:
-
-```yaml
-- name: Set the hostname
-  pdutton.xplat.hostname:
-    name: myserver.example.com
-
-- name: Set hostname using specific strategy (Unix)
-  pdutton.xplat.hostname:
-    name: myserver
-    use: systemd
-```
-
-The plugin automatically detects the target platform and delegates to:
-- `ansible.builtin.hostname` on Linux and macOS
-- `ansible.windows.win_hostname` on Windows
-
-### Using pdutton.xplat.lineinfile
-
-The `lineinfile` plugin manages lines in text files:
-
-```yaml
-- name: Ensure a line is present in a file
-  pdutton.xplat.lineinfile:
-    path: /etc/hosts
-    line: 192.168.1.99 myhost.example.com
-
-- name: Replace a line using regex
-  pdutton.xplat.lineinfile:
-    path: /etc/selinux/config
-    regexp: '^SELINUX='
-    line: SELINUX=enforcing
-
-- name: Remove a line from a file
-  pdutton.xplat.lineinfile:
-    path: /etc/sudoers
-    state: absent
-    regexp: '^%wheel'
-```
-
-The plugin automatically detects the target platform and delegates to:
-- `ansible.builtin.lineinfile` on Linux and macOS
-- `ansible.windows.win_lineinfile` on Windows
-
-### Using pdutton.xplat.ping
-
-The `ping` plugin tests connectivity (not ICMP ping, but Ansible connectivity):
-
-```yaml
-- name: Test connectivity
-  pdutton.xplat.ping:
-
-- name: Test connectivity with custom return data
-  pdutton.xplat.ping:
-    data: hello
-  register: result
-
-- name: Debug ping result
-  ansible.builtin.debug:
-    var: result.ping
-```
-
-The plugin automatically detects the target platform and delegates to:
-- `ansible.builtin.ping` on Linux and macOS
-- `ansible.windows.win_ping` on Windows
-
-### Using pdutton.xplat.reboot
-
-The `reboot` plugin reboots machines and waits for them to come back online:
-
-```yaml
-- name: Reboot the machine
-  pdutton.xplat.reboot:
-
-- name: Reboot with a longer timeout
-  pdutton.xplat.reboot:
-    reboot_timeout: 900
-
-- name: Reboot with delay
-  pdutton.xplat.reboot:
-    pre_reboot_delay: 30
-    post_reboot_delay: 60
-```
-
-The plugin automatically detects the target platform and delegates to:
-- `ansible.builtin.reboot` on Linux and macOS
-- `ansible.windows.win_reboot` on Windows
-
-### Using pdutton.xplat.service
-
-The `service` plugin manages services:
-
-```yaml
-- name: Start a service
-  pdutton.xplat.service:
-    name: httpd
-    state: started
-
-- name: Stop a service
-  pdutton.xplat.service:
-    name: httpd
-    state: stopped
-
-- name: Start and enable a service
-  pdutton.xplat.service:
-    name: httpd
-    state: started
-    enabled: yes
-```
-
-The plugin automatically detects the target platform and delegates to:
-- `ansible.builtin.service` on Linux and macOS
-- `ansible.windows.win_service` on Windows
-
-### Using pdutton.xplat.shell
-
-The `shell` plugin executes shell commands (with shell features like pipes and redirects):
-
-```yaml
-- name: Run a shell command
-  pdutton.xplat.shell:
-    cmd: echo $HOME
-  register: result
-
-- name: Run a shell command with pipes
-  pdutton.xplat.shell:
-    cmd: cat /etc/passwd | grep root
-
-- name: Run command in specific directory
-  pdutton.xplat.shell:
-    cmd: ls -la | wc -l
-    chdir: /tmp
-```
-
-The plugin automatically detects the target platform and delegates to:
-- `ansible.builtin.shell` on Linux and macOS
-- `ansible.windows.win_shell` on Windows
-
-### Using pdutton.xplat.tempfile
-
-The `tempfile` plugin creates temporary files and directories:
-
-```yaml
-- name: Create a temporary file
-  pdutton.xplat.tempfile:
-    state: file
-    suffix: .tmp
-  register: tempfile_result
-
-- name: Create a temporary directory
-  pdutton.xplat.tempfile:
-    state: directory
-    prefix: myapp_
-  register: tempdir_result
-
-- name: Use the created temporary file
-  pdutton.xplat.copy:
-    content: "temporary data"
-    dest: "{{ tempfile_result.path }}"
-```
-
-The plugin automatically detects the target platform and delegates to:
-- `ansible.builtin.tempfile` on Linux and macOS
-- `ansible.windows.win_tempfile` on Windows
-
-### Using pdutton.xplat.template
-
-The `template` plugin templates files using Jinja2:
-
-```yaml
-- name: Template a file to the remote machine
-  pdutton.xplat.template:
-    src: templates/myconfig.j2
-    dest: /etc/myapp/config.conf
-    owner: root
-    group: root
-    mode: '0644'
-
-- name: Template with backup
-  pdutton.xplat.template:
-    src: templates/app.conf.j2
-    dest: /opt/app/app.conf
-    backup: yes
-```
-
-The plugin automatically detects the target platform and delegates to:
-- `ansible.builtin.template` on Linux and macOS
-- `ansible.windows.win_template` on Windows
-
-### Using pdutton.xplat.uri
-
-The `uri` plugin interacts with webservices:
-
-```yaml
-- name: Make a GET request
-  pdutton.xplat.uri:
-    url: https://api.example.com/data
-  register: result
-
-- name: Make a POST request with JSON body
-  pdutton.xplat.uri:
-    url: https://api.example.com/data
-    method: POST
-    body:
-      name: test
-      value: 123
-    body_format: json
-
-- name: Download a file
-  pdutton.xplat.uri:
-    url: https://example.com/file.zip
-    dest: /tmp/file.zip
-```
-
-The plugin automatically detects the target platform and delegates to:
-- `ansible.builtin.uri` on Linux and macOS
-- `ansible.windows.win_uri` on Windows
-
-### Using pdutton.xplat.user
-
-The `user` plugin manages user accounts:
-
-```yaml
-- name: Create a user
-  pdutton.xplat.user:
-    name: johnd
-    comment: John Doe
-    state: present
-
-- name: Remove a user
-  pdutton.xplat.user:
-    name: johnd
-    state: absent
-
-- name: Create user with specific groups
-  pdutton.xplat.user:
-    name: johnd
-    groups:
-      - wheel
-      - developers
-    append: yes
-```
-
-The plugin automatically detects the target platform and delegates to:
-- `ansible.builtin.user` on Linux and macOS
-- `ansible.windows.win_user` on Windows
-
-### Using pdutton.xplat.wait_for
-
-The `wait_for` plugin waits for a condition before continuing:
-
-```yaml
-- name: Wait for port 8080 to be open
-  pdutton.xplat.wait_for:
-    port: 8080
-    state: started
-
-- name: Wait for file to exist
-  pdutton.xplat.wait_for:
-    path: /tmp/ready.txt
-
-- name: Wait for file to contain specific text
-  pdutton.xplat.wait_for:
-    path: /var/log/app.log
-    search_regex: "Application started"
-
-- name: Wait with custom timeout
-  pdutton.xplat.wait_for:
-    port: 3306
-    timeout: 600
-    delay: 10
-```
-
-The plugin automatically detects the target platform and delegates to:
-- `ansible.builtin.wait_for` on Linux and macOS
-- `ansible.windows.win_wait_for` on Windows
+The path format (Unix or Windows) is determined by the base path (first argument).

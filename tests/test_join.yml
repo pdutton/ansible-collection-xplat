@@ -1,0 +1,108 @@
+---
+- name: Test pdutton.xplat.join filter
+  hosts: localhost
+  gather_facts: false
+
+  tasks:
+    - name: Test Unix-style path join (single component)
+      set_fact:
+        unix_single_join: "{{ '/etc' | xplat_join('hostname') }}"
+
+    - name: Verify Unix-style single join
+      assert:
+        that:
+          - unix_single_join == '/etc/hostname'
+        fail_msg: "Expected '/etc/hostname', got '{{ unix_single_join }}'"
+
+    - name: Test Unix-style path join (multiple components)
+      set_fact:
+        unix_multi_join: "{{ '/home' | xplat_join('user', 'documents', 'report.txt') }}"
+
+    - name: Verify Unix-style multiple join
+      assert:
+        that:
+          - unix_multi_join == '/home/user/documents/report.txt'
+        fail_msg: "Expected '/home/user/documents/report.txt', got '{{ unix_multi_join }}'"
+
+    - name: Test Windows path with backslashes join
+      set_fact:
+        windows_join: "{{ 'C:\\Windows' | xplat_join('System32', 'cmd.exe') }}"
+
+    - name: Verify Windows path join
+      assert:
+        that:
+          - windows_join == 'C:\\Windows\\System32\\cmd.exe'
+        fail_msg: "Expected 'C:\\Windows\\System32\\cmd.exe', got '{{ windows_join }}'"
+
+    - name: Test Windows path with forward slashes join
+      set_fact:
+        windows_forward_slash_join: "{{ 'C:/Users' | xplat_join('Admin', 'Desktop') }}"
+
+    - name: Verify Windows path with forward slashes join
+      assert:
+        that:
+          - windows_forward_slash_join == 'C:/Users\\Admin\\Desktop'
+        fail_msg: "Expected 'C:/Users\\Admin\\Desktop', got '{{ windows_forward_slash_join }}'"
+
+    - name: Test UNC path join
+      set_fact:
+        unc_join: "{{ '\\\\server\\share' | xplat_join('folder', 'file.txt') }}"
+
+    - name: Verify UNC path join
+      assert:
+        that:
+          - unc_join == '\\\\server\\share\\folder\\file.txt'
+        fail_msg: "Expected '\\\\server\\share\\folder\\file.txt', got '{{ unc_join }}'"
+
+    - name: Test join with empty base
+      set_fact:
+        empty_base_join: "{{ '' | xplat_join('path', 'to', 'file') }}"
+
+    - name: Verify join with empty base
+      assert:
+        that:
+          - empty_base_join == 'path/to/file'
+        fail_msg: "Expected 'path/to/file', got '{{ empty_base_join }}'"
+
+    - name: Test join with single component
+      set_fact:
+        single_component_join: "{{ '/var/log' | xplat_join('syslog') }}"
+
+    - name: Verify single component join
+      assert:
+        that:
+          - single_component_join == '/var/log/syslog'
+        fail_msg: "Expected '/var/log/syslog', got '{{ single_component_join }}'"
+
+    - name: Test join preserves trailing component
+      set_fact:
+        trailing_join: "{{ '/base' | xplat_join('path/') }}"
+
+    - name: Verify trailing slash preserved
+      assert:
+        that:
+          - trailing_join == '/base/path/'
+        fail_msg: "Expected '/base/path/', got '{{ trailing_join }}'"
+
+    - name: Test join with variables
+      vars:
+        base_dir: "/var/log"
+        app_name: "myapp"
+        log_file: "app.log"
+      set_fact:
+        var_join: "{{ base_dir | xplat_join(app_name, log_file) }}"
+
+    - name: Verify variable-based join
+      assert:
+        that:
+          - var_join == '/var/log/myapp/app.log'
+        fail_msg: "Expected '/var/log/myapp/app.log', got '{{ var_join }}'"
+
+    - name: Display test results
+      debug:
+        msg: |
+          All join filter tests passed!
+          Unix: /etc + hostname -> /etc/hostname
+          Unix multi: /home + user + documents + report.txt -> /home/user/documents/report.txt
+          Windows: C:\Windows + System32 + cmd.exe -> C:\Windows\System32\cmd.exe
+          UNC: \\server\share + folder + file.txt -> \\server\share\folder\file.txt

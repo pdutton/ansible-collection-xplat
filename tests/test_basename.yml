@@ -1,0 +1,134 @@
+---
+- name: Test pdutton.xplat.basename filter
+  hosts: localhost
+  gather_facts: false
+
+  tasks:
+    - name: Test Unix-style path with xplat_basename filter
+      set_fact:
+        unix_path_basename: "{{ '/etc/hostname' | xplat_basename }}"
+
+    - name: Verify Unix-style path basename
+      assert:
+        that:
+          - unix_path_basename == 'hostname'
+        fail_msg: "Expected 'hostname', got '{{ unix_path_basename }}'"
+
+    - name: Test Unix file path
+      set_fact:
+        unix_file_basename: "{{ '/usr/bin/python3' | xplat_basename }}"
+
+    - name: Verify Unix file path basename
+      assert:
+        that:
+          - unix_file_basename == 'python3'
+        fail_msg: "Expected 'python3', got '{{ unix_file_basename }}'"
+
+    - name: Test Windows path with backslashes
+      set_fact:
+        windows_path_basename: "{{ 'C:\\Windows\\System32\\cmd.exe' | xplat_basename }}"
+
+    - name: Verify Windows path basename
+      assert:
+        that:
+          - windows_path_basename == 'cmd.exe'
+        fail_msg: "Expected 'cmd.exe', got '{{ windows_path_basename }}'"
+
+    - name: Test Windows path with forward slashes
+      set_fact:
+        windows_forward_slash_basename: "{{ 'C:/Users/Admin/Documents/report.pdf' | xplat_basename }}"
+
+    - name: Verify Windows path with forward slashes basename
+      assert:
+        that:
+          - windows_forward_slash_basename == 'report.pdf'
+        fail_msg: "Expected 'report.pdf', got '{{ windows_forward_slash_basename }}'"
+
+    - name: Test UNC path
+      set_fact:
+        unc_path_basename: "{{ '\\\\server\\share\\document.docx' | xplat_basename }}"
+
+    - name: Verify UNC path basename
+      assert:
+        that:
+          - unc_path_basename == 'document.docx'
+        fail_msg: "Expected 'document.docx', got '{{ unc_path_basename }}'"
+
+    - name: Test Unix path with trailing slash
+      set_fact:
+        unix_trailing_slash_basename: "{{ '/path/to/directory/' | xplat_basename }}"
+
+    - name: Verify Unix path with trailing slash returns empty string
+      assert:
+        that:
+          - unix_trailing_slash_basename == ''
+        fail_msg: "Expected empty string, got '{{ unix_trailing_slash_basename }}'"
+
+    - name: Test Windows path with trailing backslash
+      set_fact:
+        windows_trailing_backslash_basename: "{{ 'C:\\Windows\\System32\\' | xplat_basename }}"
+
+    - name: Verify Windows path with trailing backslash returns empty string
+      assert:
+        that:
+          - windows_trailing_backslash_basename == ''
+        fail_msg: "Expected empty string, got '{{ windows_trailing_backslash_basename }}'"
+
+    - name: Test single filename without path
+      set_fact:
+        single_filename_basename: "{{ 'filename.txt' | xplat_basename }}"
+
+    - name: Verify single filename basename
+      assert:
+        that:
+          - single_filename_basename == 'filename.txt'
+        fail_msg: "Expected 'filename.txt', got '{{ single_filename_basename }}'"
+
+    - name: Test empty string
+      set_fact:
+        empty_string_basename: "{{ '' | xplat_basename }}"
+
+    - name: Verify empty string returns empty string
+      assert:
+        that:
+          - empty_string_basename == ''
+        fail_msg: "Expected empty string, got '{{ empty_string_basename }}'"
+
+    - name: Test mixed separators (Windows path with mixed slashes)
+      set_fact:
+        mixed_separators_basename: "{{ 'C:/foo\\bar/baz.txt' | xplat_basename }}"
+
+    - name: Verify mixed separators basename
+      assert:
+        that:
+          - mixed_separators_basename == 'baz.txt'
+        fail_msg: "Expected 'baz.txt', got '{{ mixed_separators_basename }}'"
+
+    - name: Test absolute Unix path with multiple components
+      set_fact:
+        absolute_unix_basename: "{{ '/usr/local/bin/some-script.sh' | xplat_basename }}"
+
+    - name: Verify absolute Unix path basename
+      assert:
+        that:
+          - absolute_unix_basename == 'some-script.sh'
+        fail_msg: "Expected 'some-script.sh', got '{{ absolute_unix_basename }}'"
+
+    - name: Test Windows path with drive letter only
+      set_fact:
+        drive_letter_basename: "{{ 'C:\\' | xplat_basename }}"
+
+    - name: Verify drive letter only returns empty string
+      assert:
+        that:
+          - drive_letter_basename == ''
+        fail_msg: "Expected empty string, got '{{ drive_letter_basename }}'"
+
+    - name: Display test results
+      debug:
+        msg: |
+          All basename filter tests passed!
+          Unix path: /etc/hostname -> hostname
+          Windows path: C:\Windows\System32\cmd.exe -> cmd.exe
+          UNC path: \\server\share\document.docx -> document.docx
+          Trailing slash: /path/to/directory/ -> (empty)

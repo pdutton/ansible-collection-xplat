@@ -1,0 +1,71 @@
+DOCUMENTATION: |
+  name: splitext
+  author: Peter Dutton
+  short_description: Split a path into root and extension
+  description:
+    - This filter splits a path string into its root and extension components.
+    - It automatically detects whether the input is a Unix-style or Windows-style path
+      and applies the appropriate splitext logic.
+    - The extension includes the leading dot. Files without an extension return
+      an empty string for the extension component.
+    - Hidden files (starting with dot) are handled correctly - the leading dot is
+      not considered an extension separator.
+  notes:
+    - Windows paths are detected by looking for backslashes, drive letters (C:), or UNC
+      prefixes (\\\\).
+    - Returns a list with two elements: [root, extension].
+    - The extension includes the leading dot (e.g., '.txt', '.exe').
+    - For files without extensions, the second element is an empty string.
+    - Hidden files like '.bashrc' return ['.bashrc', ''] (no extension).
+    - This filter uses Python's C(ntpath) for Windows paths and C(posixpath) for Unix
+      paths.
+  options:
+    path:
+      description: A path string in Unix or Windows format
+      type: str
+      required: true
+  examples: |
+    # Unix-style paths
+    - name: Split Unix path into root and extension
+      debug:
+        msg: "{{ '/etc/hostname.conf' | pdutton.xplat.splitext }}"
+      # Output: ['/etc/hostname', '.conf']
+
+    - name: Access root component
+      set_fact:
+        path_parts: "{{ '/var/log/syslog.log' | pdutton.xplat.splitext }}"
+    - debug:
+        msg: "Root: {{ path_parts[0] }}, Extension: {{ path_parts[1] }}"
+      # Output: Root: /var/log/syslog, Extension: .log
+
+    # Windows-style paths
+    - name: Split Windows path
+      debug:
+        msg: "{{ 'C:\\Windows\\System32\\cmd.exe' | pdutton.xplat.splitext }}"
+      # Output: ['C:\\Windows\\System32\\cmd', '.exe']
+
+    # Files without extensions
+    - name: Split path without extension
+      debug:
+        msg: "{{ '/usr/bin/python3' | pdutton.xplat.splitext }}"
+      # Output: ['/usr/bin/python3', '']
+
+    # Hidden files
+    - name: Split hidden file (dot file)
+      debug:
+        msg: "{{ '/home/user/.bashrc' | pdutton.xplat.splitext }}"
+      # Output: ['/home/user/.bashrc', '']
+
+    - name: Split hidden file with extension
+      debug:
+        msg: "{{ '/home/user/.config.bak' | pdutton.xplat.splitext }}"
+      # Output: ['/home/user/.config', '.bak']
+
+  return:
+    description: A list containing [root, extension]
+    type: list
+    elements: str
+    examples:
+      - "['/etc/hostname', '.conf']"
+      - "['C:\\\\Windows\\\\cmd', '.exe']"
+      - "['filename', '']"

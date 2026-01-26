@@ -1,0 +1,124 @@
+---
+- name: Test pdutton.xplat.splitext filter
+  hosts: localhost
+  gather_facts: false
+
+  tasks:
+    - name: Test Unix-style path with extension
+      set_fact:
+        unix_path_splitext: "{{ '/etc/hostname.conf' | xplat_splitext }}"
+
+    - name: Verify Unix-style path splitext
+      assert:
+        that:
+          - unix_path_splitext[0] == '/etc/hostname'
+          - unix_path_splitext[1] == '.conf'
+        fail_msg: "Expected ['/etc/hostname', '.conf'], got {{ unix_path_splitext }}"
+
+    - name: Test Unix file path without extension
+      set_fact:
+        unix_no_ext_splitext: "{{ '/usr/bin/python3' | xplat_splitext }}"
+
+    - name: Verify Unix file without extension
+      assert:
+        that:
+          - unix_no_ext_splitext[0] == '/usr/bin/python3'
+          - unix_no_ext_splitext[1] == ''
+        fail_msg: "Expected ['/usr/bin/python3', ''], got {{ unix_no_ext_splitext }}"
+
+    - name: Test Windows path with backslashes
+      set_fact:
+        windows_path_splitext: "{{ 'C:\\Windows\\System32\\cmd.exe' | xplat_splitext }}"
+
+    - name: Verify Windows path splitext
+      assert:
+        that:
+          - windows_path_splitext[0] == 'C:\\Windows\\System32\\cmd'
+          - windows_path_splitext[1] == '.exe'
+        fail_msg: "Expected ['C:\\Windows\\System32\\cmd', '.exe'], got {{ windows_path_splitext }}"
+
+    - name: Test Windows path with forward slashes
+      set_fact:
+        windows_forward_slash_splitext: "{{ 'C:/Users/Admin/report.pdf' | xplat_splitext }}"
+
+    - name: Verify Windows path with forward slashes splitext
+      assert:
+        that:
+          - windows_forward_slash_splitext[0] == 'C:/Users/Admin/report'
+          - windows_forward_slash_splitext[1] == '.pdf'
+        fail_msg: "Expected ['C:/Users/Admin/report', '.pdf'], got {{ windows_forward_slash_splitext }}"
+
+    - name: Test UNC path
+      set_fact:
+        unc_path_splitext: "{{ '\\\\server\\share\\document.docx' | xplat_splitext }}"
+
+    - name: Verify UNC path splitext
+      assert:
+        that:
+          - unc_path_splitext[0] == '\\\\server\\share\\document'
+          - unc_path_splitext[1] == '.docx'
+        fail_msg: "Expected ['\\\\server\\share\\document', '.docx'], got {{ unc_path_splitext }}"
+
+    - name: Test hidden file (dot file) without extension
+      set_fact:
+        hidden_file_splitext: "{{ '/home/user/.bashrc' | xplat_splitext }}"
+
+    - name: Verify hidden file splitext (no extension)
+      assert:
+        that:
+          - hidden_file_splitext[0] == '/home/user/.bashrc'
+          - hidden_file_splitext[1] == ''
+        fail_msg: "Expected ['/home/user/.bashrc', ''], got {{ hidden_file_splitext }}"
+
+    - name: Test hidden file with extension
+      set_fact:
+        hidden_with_ext_splitext: "{{ '/home/user/.config.bak' | xplat_splitext }}"
+
+    - name: Verify hidden file with extension splitext
+      assert:
+        that:
+          - hidden_with_ext_splitext[0] == '/home/user/.config'
+          - hidden_with_ext_splitext[1] == '.bak'
+        fail_msg: "Expected ['/home/user/.config', '.bak'], got {{ hidden_with_ext_splitext }}"
+
+    - name: Test single filename with extension
+      set_fact:
+        single_file_splitext: "{{ 'document.txt' | xplat_splitext }}"
+
+    - name: Verify single filename splitext
+      assert:
+        that:
+          - single_file_splitext[0] == 'document'
+          - single_file_splitext[1] == '.txt'
+        fail_msg: "Expected ['document', '.txt'], got {{ single_file_splitext }}"
+
+    - name: Test file with multiple dots
+      set_fact:
+        multi_dot_splitext: "{{ '/path/to/archive.tar.gz' | xplat_splitext }}"
+
+    - name: Verify file with multiple dots (only last extension)
+      assert:
+        that:
+          - multi_dot_splitext[0] == '/path/to/archive.tar'
+          - multi_dot_splitext[1] == '.gz'
+        fail_msg: "Expected ['/path/to/archive.tar', '.gz'], got {{ multi_dot_splitext }}"
+
+    - name: Test empty string
+      set_fact:
+        empty_string_splitext: "{{ '' | xplat_splitext }}"
+
+    - name: Verify empty string returns empty components
+      assert:
+        that:
+          - empty_string_splitext[0] == ''
+          - empty_string_splitext[1] == ''
+        fail_msg: "Expected ['', ''], got {{ empty_string_splitext }}"
+
+    - name: Display test results
+      debug:
+        msg: |
+          All splitext filter tests passed!
+          Unix path: /etc/hostname.conf -> ['/etc/hostname', '.conf']
+          Windows path: C:\Windows\System32\cmd.exe -> ['C:\Windows\System32\cmd', '.exe']
+          Hidden file: /home/user/.bashrc -> ['/home/user/.bashrc', '']
+          Multi-dot: archive.tar.gz -> ['archive.tar', '.gz']

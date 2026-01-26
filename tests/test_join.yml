@@ -6,7 +6,7 @@
   tasks:
     - name: Test Unix-style path join (single component)
       set_fact:
-        unix_single_join: "{{ '/etc' | xplat_join('hostname') }}"
+        unix_single_join: "{{ '/etc' | pdutton.xplat.join('hostname') }}"
 
     - name: Verify Unix-style single join
       assert:
@@ -16,7 +16,7 @@
 
     - name: Test Unix-style path join (multiple components)
       set_fact:
-        unix_multi_join: "{{ '/home' | xplat_join('user', 'documents', 'report.txt') }}"
+        unix_multi_join: "{{ '/home' | pdutton.xplat.join('user', 'documents', 'report.txt') }}"
 
     - name: Verify Unix-style multiple join
       assert:
@@ -26,7 +26,7 @@
 
     - name: Test Windows path with backslashes join
       set_fact:
-        windows_join: "{{ 'C:\\Windows' | xplat_join('System32', 'cmd.exe') }}"
+        windows_join: "{{ 'C:\\Windows' | pdutton.xplat.join('System32', 'cmd.exe') }}"
 
     - name: Verify Windows path join
       assert:
@@ -36,7 +36,7 @@
 
     - name: Test Windows path with forward slashes join
       set_fact:
-        windows_forward_slash_join: "{{ 'C:/Users' | xplat_join('Admin', 'Desktop') }}"
+        windows_forward_slash_join: "{{ 'C:/Users' | pdutton.xplat.join('Admin', 'Desktop') }}"
 
     - name: Verify Windows path with forward slashes join
       assert:
@@ -46,7 +46,7 @@
 
     - name: Test UNC path join
       set_fact:
-        unc_join: "{{ '\\\\server\\share' | xplat_join('folder', 'file.txt') }}"
+        unc_join: "{{ '\\\\server\\share' | pdutton.xplat.join('folder', 'file.txt') }}"
 
     - name: Verify UNC path join
       assert:
@@ -56,7 +56,7 @@
 
     - name: Test join with empty base
       set_fact:
-        empty_base_join: "{{ '' | xplat_join('path', 'to', 'file') }}"
+        empty_base_join: "{{ '' | pdutton.xplat.join('path', 'to', 'file') }}"
 
     - name: Verify join with empty base
       assert:
@@ -66,7 +66,7 @@
 
     - name: Test join with single component
       set_fact:
-        single_component_join: "{{ '/var/log' | xplat_join('syslog') }}"
+        single_component_join: "{{ '/var/log' | pdutton.xplat.join('syslog') }}"
 
     - name: Verify single component join
       assert:
@@ -76,7 +76,7 @@
 
     - name: Test join preserves trailing component
       set_fact:
-        trailing_join: "{{ '/base' | xplat_join('path/') }}"
+        trailing_join: "{{ '/base' | pdutton.xplat.join('path/') }}"
 
     - name: Verify trailing slash preserved
       assert:
@@ -90,7 +90,7 @@
         app_name: "myapp"
         log_file: "app.log"
       set_fact:
-        var_join: "{{ base_dir | xplat_join(app_name, log_file) }}"
+        var_join: "{{ base_dir | pdutton.xplat.join(app_name, log_file) }}"
 
     - name: Verify variable-based join
       assert:

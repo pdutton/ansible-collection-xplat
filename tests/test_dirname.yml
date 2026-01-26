@@ -6,7 +6,7 @@
   tasks:
     - name: Test Unix-style path
       set_fact:
-        unix_path_dirname: "{{ '/etc/hostname' | xplat_dirname }}"
+        unix_path_dirname: "{{ '/etc/hostname' | pdutton.xplat.dirname }}"
 
     - name: Verify Unix-style path dirname
       assert:
@@ -16,7 +16,7 @@
 
     - name: Test Unix file path with multiple components
       set_fact:
-        unix_file_dirname: "{{ '/usr/local/bin/python3' | xplat_dirname }}"
+        unix_file_dirname: "{{ '/usr/local/bin/python3' | pdutton.xplat.dirname }}"
 
     - name: Verify Unix file path dirname
       assert:
@@ -26,7 +26,7 @@
 
     - name: Test Windows path with backslashes
       set_fact:
-        windows_path_dirname: "{{ 'C:\\Windows\\System32\\cmd.exe' | xplat_dirname }}"
+        windows_path_dirname: "{{ 'C:\\Windows\\System32\\cmd.exe' | pdutton.xplat.dirname }}"
 
     - name: Verify Windows path dirname
       assert:
@@ -36,7 +36,7 @@
 
     - name: Test Windows path with forward slashes
       set_fact:
-        windows_forward_slash_dirname: "{{ 'C:/Users/Admin/Documents/report.pdf' | xplat_dirname }}"
+        windows_forward_slash_dirname: "{{ 'C:/Users/Admin/Documents/report.pdf' | pdutton.xplat.dirname }}"
 
     - name: Verify Windows path with forward slashes dirname
       assert:
@@ -46,7 +46,7 @@
 
     - name: Test UNC path
       set_fact:
-        unc_path_dirname: "{{ '\\\\server\\share\\folder\\document.docx' | xplat_dirname }}"
+        unc_path_dirname: "{{ '\\\\server\\share\\folder\\document.docx' | pdutton.xplat.dirname }}"
 
     - name: Verify UNC path dirname
       assert:
@@ -56,7 +56,7 @@
 
     - name: Test single filename without path
       set_fact:
-        single_filename_dirname: "{{ 'filename.txt' | xplat_dirname }}"
+        single_filename_dirname: "{{ 'filename.txt' | pdutton.xplat.dirname }}"
 
     - name: Verify single filename dirname returns empty string
       assert:
@@ -66,7 +66,7 @@
 
     - name: Test root Unix path
       set_fact:
-        root_unix_dirname: "{{ '/file.txt' | xplat_dirname }}"
+        root_unix_dirname: "{{ '/file.txt' | pdutton.xplat.dirname }}"
 
     - name: Verify root Unix path dirname
       assert:
@@ -76,17 +76,17 @@
 
     - name: Test Windows drive root
       set_fact:
-        drive_root_dirname: "{{ 'C:\\file.txt' | xplat_dirname }}"
+        drive_root_dirname: "{{ 'C:\\file.txt' | pdutton.xplat.dirname }}"
 
     - name: Verify Windows drive root dirname
       assert:
         that:
-          - drive_root_dirname == 'C:\\'
+          - drive_root_dirname == "C:\\"
         fail_msg: "Expected 'C:\\', got '{{ drive_root_dirname }}'"
 
     - name: Test empty string
       set_fact:
-        empty_string_dirname: "{{ '' | xplat_dirname }}"
+        empty_string_dirname: "{{ '' | pdutton.xplat.dirname }}"
 
     - name: Verify empty string returns empty string
       assert:

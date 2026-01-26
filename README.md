@@ -33,6 +33,12 @@ Included filters (cross-platform path manipulation):
     - pdutton.xplat.splitext - split path into root and extension
     - pdutton.xplat.join - join path components using appropriate separator
 
+Included filters (cross-platform path manipulation):
+    - pdutton.xplat.basename - extract path basename from Unix or Windows paths
+    - pdutton.xplat.dirname - extract directory name from Unix or Windows paths
+    - pdutton.xplat.splitext - split path into root and extension
+    - pdutton.xplat.join - join path components using appropriate separator
+
 ## Platforms
 
 Linux, Windows, and Mac will initially be supported.

@@ -17,7 +17,7 @@ help:
 
 build:
 	@echo "Building collection artifact..."
-	ansible-galaxy collection build
+	ansible-galaxy collection build --force
 
 install: build
 	@echo "Installing collection..."
@@ -27,7 +27,7 @@ uninstall:
 	@echo "Uninstalling collection..."
 	rm -rf $(AnsibleCollectionsPath)/$(CollectionNamespace)/$(CollectionName)
 
-test:
+test: install
 	@echo "Running integration tests..."
 	ansible-playbook tests/test_stat.yml
 	ansible-playbook tests/test_basename.yml

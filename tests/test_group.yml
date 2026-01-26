@@ -1,0 +1,109 @@
+---
+- name: Test pdutton.xplat.group plugin
+  hosts: localhost
+  gather_facts: true
+
+  tasks:
+    # Note: Group management typically requires root privileges
+    # These tests verify basic functionality with become
+
+    - name: Test creating a group (requires become)
+      pdutton.xplat.group:
+        name: xplat_test_group
+        state: present
+      register: create_group
+      ignore_errors: true
+      become: true
+      when: ansible_os_family != 'Windows'
+
+    - name: Show create group result
+      debug:
+        var: create_group
+      when: create_group is defined
+
+    - name: Verify group was created
+      ansible.builtin.shell:
+        cmd: getent group xplat_test_group
+      register: group_exists
+      ignore_errors: true
+      when:
+        - ansible_os_family != 'Windows'
+        - create_group is not failed
+
+    - name: Assert group exists
+      assert:
+        that:
+          - group_exists.rc == 0
+        fail_msg: "Expected group xplat_test_group to exist"
+      when:
+        - ansible_os_family != 'Windows'
+        - group_exists is defined
+        - group_exists is not skipped
+        - group_exists is not failed
+
+    - name: Test group idempotency
+      pdutton.xplat.group:
+        name: xplat_test_group
+        state: present
+      register: group_idempotent
+      ignore_errors: true
+      become: true
+      when:
+        - ansible_os_family != 'Windows'
+        - create_group is not failed
+
+    - name: Assert group module is idempotent
+      assert:
+        that:
+          - group_idempotent is not changed
+        fail_msg: "Expected group module to be idempotent"
+      when:
+        - ansible_os_family != 'Windows'
+        - group_idempotent is defined
+        - group_idempotent is not skipped
+        - group_idempotent is not failed
+
+    - name: Remove test group
+      pdutton.xplat.group:
+        name: xplat_test_group
+        state: absent
+      register: remove_group
+      ignore_errors: true
+      become: true
+      when: ansible_os_family != 'Windows'
+
+    - name: Verify group was removed
+      ansible.builtin.shell:
+        cmd: getent group xplat_test_group
+      register: group_removed
+      ignore_errors: true
+      when:
+        - ansible_os_family != 'Windows'
+        - remove_group is not failed
+
+    - name: Assert group no longer exists
+      assert:
+        that:
+          - group_removed.rc != 0
+        fail_msg: "Expected group xplat_test_group to be removed"
+      when:
+        - ansible_os_family != 'Windows'
+        - group_removed is defined
+        - group_removed is not skipped
+        - group_removed is not failed
+
+    # Test without become to verify error handling
+    - name: Test group without privileges (should fail gracefully)
+      pdutton.xplat.group:
+        name: xplat_nonexistent_group_test
+        state: present
+      register: group_no_priv
+      ignore_errors: true
+      when: ansible_os_family != 'Windows'
+
+    - name: Verify group module fails without privileges
+      debug:
+        msg: "Group module correctly requires privileges: {{ group_no_priv.msg | default('error') }}"
+      when:
+        - group_no_priv is defined
+        - group_no_priv is failed

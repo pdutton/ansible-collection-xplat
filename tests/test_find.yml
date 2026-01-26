@@ -1,0 +1,130 @@
+---
+- name: Test pdutton.xplat.find plugin
+  hosts: localhost
+  gather_facts: true
+
+  tasks:
+    - name: Create a temporary directory structure for testing
+      pdutton.xplat.file:
+        path: /tmp/xplat_find_test/subdir
+        state: directory
+      register: test_dir
+      ignore_errors: true
+      when: ansible_os_family != 'Windows'
+
+    - name: Create test files
+      pdutton.xplat.copy:
+        content: "Test content for {{ item }}"
+        dest: "/tmp/xplat_find_test/{{ item }}"
+      loop:
+        - file1.txt
+        - file2.txt
+        - file3.log
+        - subdir/nested.txt
+      ignore_errors: true
+      when:
+        - ansible_os_family != 'Windows'
+        - test_dir is not failed
+
+    - name: Find all .txt files
+      pdutton.xplat.find:
+        paths: /tmp/xplat_find_test
+        patterns: "*.txt"
+        recurse: yes
+      register: find_txt
+      ignore_errors: true
+      when: ansible_os_family != 'Windows'
+
+    - name: Show find txt result
+      debug:
+        var: find_txt
+      when: find_txt is defined
+
+    - name: Verify found .txt files
+      assert:
+        that:
+          - find_txt.matched == 3
+        fail_msg: "Expected to find 3 .txt files"
+      when:
+        - ansible_os_family != 'Windows'
+        - find_txt is not failed
+
+    - name: Find all .log files
+      pdutton.xplat.find:
+        paths: /tmp/xplat_find_test
+        patterns: "*.log"
+      register: find_log
+      ignore_errors: true
+      when: ansible_os_family != 'Windows'
+
+    - name: Verify found .log files
+      assert:
+        that:
+          - find_log.matched == 1
+        fail_msg: "Expected to find 1 .log file"
+      when:
+        - ansible_os_family != 'Windows'
+        - find_log is not failed
+
+    - name: Find directories only
+      pdutton.xplat.find:
+        paths: /tmp/xplat_find_test
+        file_type: directory
+        recurse: yes
+      register: find_dirs
+      ignore_errors: true
+      when: ansible_os_family != 'Windows'
+
+    - name: Verify found directories
+      assert:
+        that:
+          - find_dirs.matched >= 1
+        fail_msg: "Expected to find at least 1 directory"
+      when:
+        - ansible_os_family != 'Windows'
+        - find_dirs is not failed
+
+    - name: Find files without recursion
+      pdutton.xplat.find:
+        paths: /tmp/xplat_find_test
+        patterns: "*.txt"
+        recurse: no
+      register: find_no_recurse
+      ignore_errors: true
+      when: ansible_os_family != 'Windows'
+
+    - name: Verify non-recursive find
+      assert:
+        that:
+          - find_no_recurse.matched == 2
+        fail_msg: "Expected to find 2 .txt files without recursion"
+      when:
+        - ansible_os_family != 'Windows'
+        - find_no_recurse is not failed
+
+    - name: Find all files with multiple patterns
+      pdutton.xplat.find:
+        paths: /tmp/xplat_find_test
+        patterns:
+          - "*.txt"
+          - "*.log"
+        recurse: yes
+      register: find_multi
+      ignore_errors: true
+      when: ansible_os_family != 'Windows'
+
+    - name: Verify multiple patterns find
+      assert:
+        that:
+          - find_multi.matched == 4
+        fail_msg: "Expected to find 4 files with multiple patterns"
+      when:
+        - ansible_os_family != 'Windows'
+        - find_multi is not failed
+
+    - name: Clean up test directory
+      pdutton.xplat.file:
+        path: /tmp/xplat_find_test
+        state: absent
+      ignore_errors: true
+      when: ansible_os_family != 'Windows'

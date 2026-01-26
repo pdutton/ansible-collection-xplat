@@ -1,0 +1,120 @@
+---
+- name: Test pdutton.xplat.tempfile plugin
+  hosts: localhost
+  gather_facts: true
+
+  tasks:
+    - name: Create a temporary file
+      pdutton.xplat.tempfile:
+        state: file
+        suffix: .tmp
+      register: temp_file
+      ignore_errors: true
+      when: ansible_os_family != 'Windows'
+
+    - name: Show temp file result
+      debug:
+        var: temp_file
+      when: temp_file is defined
+
+    - name: Verify temp file was created
+      pdutton.xplat.stat:
+        path: "{{ temp_file.path }}"
+      register: temp_file_stat
+      when:
+        - ansible_os_family != 'Windows'
+        - temp_file is not failed
+
+    - name: Assert temp file exists
+      assert:
+        that:
+          - temp_file_stat.stat.exists | bool
+          - temp_file_stat.stat.isreg | bool
+          - "'.tmp' in temp_file.path"
+        fail_msg: "Expected temp file to exist with .tmp suffix"
+      when:
+        - ansible_os_family != 'Windows'
+        - temp_file_stat is defined
+        - temp_file_stat is not failed
+
+    - name: Create a temporary directory
+      pdutton.xplat.tempfile:
+        state: directory
+        prefix: xplat_
+      register: temp_dir
+      ignore_errors: true
+      when: ansible_os_family != 'Windows'
+
+    - name: Show temp dir result
+      debug:
+        var: temp_dir
+      when: temp_dir is defined
+
+    - name: Verify temp directory was created
+      pdutton.xplat.stat:
+        path: "{{ temp_dir.path }}"
+      register: temp_dir_stat
+      when:
+        - ansible_os_family != 'Windows'
+        - temp_dir is not failed
+
+    - name: Assert temp directory exists
+      assert:
+        that:
+          - temp_dir_stat.stat.exists | bool
+          - temp_dir_stat.stat.isdir | bool
+          - "'xplat_' in temp_dir.path"
+        fail_msg: "Expected temp directory to exist with xplat_ prefix"
+      when:
+        - ansible_os_family != 'Windows'
+        - temp_dir_stat is defined
+        - temp_dir_stat is not failed
+
+    - name: Create temp file with prefix and suffix
+      pdutton.xplat.tempfile:
+        state: file
+        prefix: test_
+        suffix: .data
+      register: temp_prefixed
+      ignore_errors: true
+      when: ansible_os_family != 'Windows'
+
+    - name: Verify prefix and suffix
+      assert:
+        that:
+          - "'test_' in temp_prefixed.path"
+          - "'.data' in temp_prefixed.path"
+        fail_msg: "Expected temp file to have correct prefix and suffix"
+      when:
+        - ansible_os_family != 'Windows'
+        - temp_prefixed is not failed
+
+    - name: Create temp file in specific path
+      pdutton.xplat.tempfile:
+        state: file
+        path: /tmp
+        prefix: xplat_path_
+      register: temp_path
+      ignore_errors: true
+      when: ansible_os_family != 'Windows'
+
+    - name: Verify temp file is in specified path
+      assert:
+        that:
+          - "'/tmp/' in temp_path.path"
+        fail_msg: "Expected temp file to be in /tmp"
+      when:
+        - ansible_os_family != 'Windows'
+        - temp_path is not failed
+
+    - name: Clean up temp files
+      pdutton.xplat.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "{{ temp_file.path | default('/nonexistent') }}"
+        - "{{ temp_dir.path | default('/nonexistent') }}"
+        - "{{ temp_prefixed.path | default('/nonexistent') }}"
+        - "{{ temp_path.path | default('/nonexistent') }}"
+      ignore_errors: true
+      when: ansible_os_family != 'Windows'

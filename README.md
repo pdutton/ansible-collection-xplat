@@ -4,14 +4,28 @@ The pdutton.xplat collection provides cross platform functionality Ansible.
 
 ## What is included
 
-Initially this collecton will provide cross platform plugins for basic tasks that require different modules
-on different operating sytems.
+Initially this collection will provide cross platform plugins for basic tasks that require different modules
+on different operating systems.
 
 Included plugins:
-    - pdutton.xplat.copy to call ansible.builtin.copy or ansible.windows.win_copy
-    - pdutton.xplat.command to call ansible.builtin.command or ansible.windows.win_command
-    - pdutton.xplat.file to call  ansible.builtin.file or ansible.windows.win_file
-    - pdutton.xplat.stat to call  ansible.builtin.stat or ansible.windows.win_stat
+- `pdutton.xplat.command` - execute commands (`ansible.builtin.command` / `ansible.windows.win_command`)
+- `pdutton.xplat.copy` - copy files (`ansible.builtin.copy` / `ansible.windows.win_copy`)
+- `pdutton.xplat.file` - manage files and directories (`ansible.builtin.file` / `ansible.windows.win_file`)
+- `pdutton.xplat.find` - find files based on criteria (`ansible.builtin.find` / `ansible.windows.win_find`)
+- `pdutton.xplat.get_url` - download files from HTTP/HTTPS/FTP (`ansible.builtin.get_url` / `ansible.windows.win_get_url`)
+- `pdutton.xplat.group` - manage groups (`ansible.builtin.group` / `ansible.windows.win_group`)
+- `pdutton.xplat.hostname` - manage hostname (`ansible.builtin.hostname` / `ansible.windows.win_hostname`)
+- `pdutton.xplat.lineinfile` - manage lines in text files (`ansible.builtin.lineinfile` / `ansible.windows.win_lineinfile`)
+- `pdutton.xplat.ping` - test connectivity (`ansible.builtin.ping` / `ansible.windows.win_ping`)
+- `pdutton.xplat.reboot` - reboot machines (`ansible.builtin.reboot` / `ansible.windows.win_reboot`)
+- `pdutton.xplat.service` - manage services (`ansible.builtin.service` / `ansible.windows.win_service`)
+- `pdutton.xplat.shell` - execute shell commands (`ansible.builtin.shell` / `ansible.windows.win_shell`)
+- `pdutton.xplat.stat` - get file status (`ansible.builtin.stat` / `ansible.windows.win_stat`)
+- `pdutton.xplat.tempfile` - create temporary files/directories (`ansible.builtin.tempfile` / `ansible.windows.win_tempfile`)
+- `pdutton.xplat.template` - template files with Jinja2 (`ansible.builtin.template` / `ansible.windows.win_template`)
+- `pdutton.xplat.uri` - interact with webservices (`ansible.builtin.uri` / `ansible.windows.win_uri`)
+- `pdutton.xplat.user` - manage user accounts (`ansible.builtin.user` / `ansible.windows.win_user`)
+- `pdutton.xplat.wait_for` - wait for conditions (`ansible.builtin.wait_for` / `ansible.windows.win_wait_for`)
 
 Included filters (cross-platform path manipulation):
     - pdutton.xplat.basename - extract path basename from Unix or Windows paths

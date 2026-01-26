@@ -1,0 +1,4 @@
+Hello {{ test_name }}!
+The current user is {{ ansible_user_id }}.
+Today's date is {{ ansible_date_time.date }}.
+Custom value: {{ custom_value | default('not set') }}

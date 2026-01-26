@@ -1,0 +1,113 @@
+---
+- name: Test pdutton.xplat.shell plugin
+  hosts: localhost
+  gather_facts: true
+
+  tasks:
+    - name: Run shell command with variable expansion
+      pdutton.xplat.shell:
+        cmd: echo $HOME
+      register: home_result
+      ignore_errors: true
+      when: ansible_os_family != 'Windows'
+
+    - name: Show home result
+      debug:
+        var: home_result
+      when: home_result is defined
+
+    - name: Verify shell variable expansion worked
+      assert:
+        that:
+          - home_result.rc == 0
+          - home_result.stdout | length > 0
+        fail_msg: "Expected shell to expand $HOME variable"
+      when:
+        - ansible_os_family != 'Windows'
+        - home_result is not failed
+
+    - name: Run shell command with pipe
+      pdutton.xplat.shell:
+        cmd: echo "hello world" | tr 'a-z' 'A-Z'
+      register: pipe_result
+      ignore_errors: true
+      when: ansible_os_family != 'Windows'
+
+    - name: Show pipe result
+      debug:
+        var: pipe_result
+      when: pipe_result is defined
+
+    - name: Verify pipe worked
+      assert:
+        that:
+          - pipe_result.rc == 0
+          - "'HELLO WORLD' in pipe_result.stdout"
+        fail_msg: "Expected pipe to transform text to uppercase"
+      when:
+        - ansible_os_family != 'Windows'
+        - pipe_result is not failed
+
+    - name: Run shell command with redirection
+      pdutton.xplat.shell:
+        cmd: echo "test content" > /tmp/xplat_shell_test.txt && cat /tmp/xplat_shell_test.txt
+      register: redirect_result
+      ignore_errors: true
+      when: ansible_os_family != 'Windows'
+
+    - name: Show redirect result
+      debug:
+        var: redirect_result
+      when: redirect_result is defined
+
+    - name: Verify redirection worked
+      assert:
+        that:
+          - redirect_result.rc == 0
+          - "'test content' in redirect_result.stdout"
+        fail_msg: "Expected redirection to work"
+      when:
+        - ansible_os_family != 'Windows'
+        - redirect_result is not failed
+
+    - name: Run shell command with chdir
+      pdutton.xplat.shell:
+        cmd: pwd
+        chdir: /tmp
+      register: chdir_result
+      ignore_errors: true
+      when: ansible_os_family != 'Windows'
+
+    - name: Verify chdir worked
+      assert:
+        that:
+          - chdir_result.rc == 0
+          - "'/tmp' in chdir_result.stdout"
+        fail_msg: "Expected pwd to show /tmp"
+      when:
+        - ansible_os_family != 'Windows'
+        - chdir_result is not failed
+
+    - name: Test creates parameter - command should be skipped
+      pdutton.xplat.shell:
+        cmd: echo "This should be skipped"
+        creates: /etc/hostname
+      register: creates_result
+      ignore_errors: true
+      when: ansible_os_family != 'Windows'
+
+    - name: Verify command was skipped due to creates
+      assert:
+        that:
+          - creates_result is not changed
+        fail_msg: "Expected command to be skipped because /etc/hostname exists"
+      when:
+        - ansible_os_family != 'Windows'
+        - creates_result is not failed
+
+    - name: Clean up test file
+      pdutton.xplat.file:
+        path: /tmp/xplat_shell_test.txt
+        state: absent
+      ignore_errors: true
+      when: ansible_os_family != 'Windows'

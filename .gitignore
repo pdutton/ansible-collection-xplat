@@ -30,3 +30,6 @@ env/
 .pytest_cache/
 htmlcov/
 .coverage
+
+# Claude
+.claude/settings.local.json

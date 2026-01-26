@@ -1,9 +1,11 @@
 .PHONY: build install uninstall test clean help
 
-COLLECTION_NAMESPACE := pdutton
-COLLECTION_NAME := xplat
-COLLECTION_VERSION := $(shell grep -E '^\s*version:' galaxy.yml | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
-COLLECTION_ARTIFACT := $(COLLECTION_NAMESPACE)-$(COLLECTION_NAME)-$(COLLECTION_VERSION).tar.gz
+CollectionNamespace := pdutton
+CollectionName := xplat
+CollectionVersion := $(shell grep -E '^\s*version:' galaxy.yml | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+CollectionArtifact := $(CollectionNamespace)-$(CollectionName)-$(CollectionVersion).tar.gz
+
+AnsibleCollectionsPath?=~/.ansible/collections/ansible_collections
 
 help:
 	@echo "Available targets:"
@@ -19,11 +21,11 @@ build:
 
 install: build
 	@echo "Installing collection..."
-	ansible-galaxy collection install $(COLLECTION_ARTIFACT) --force
+	ansible-galaxy collection install $(CollectionArtifact) --force
 
 uninstall:
 	@echo "Uninstalling collection..."
-	ansible-galaxy collection remove $(COLLECTION_NAMESPACE).$(COLLECTION_NAME)
+	rm -rf $(AnsibleCollectionsPath)/$(CollectionNamespace)/$(CollectionName)
 
 test: install
 	@echo "Running integration tests..."
@@ -35,7 +37,7 @@ test: install
 
 clean:
 	@echo "Cleaning build artifacts..."
-	rm -f $(COLLECTION_ARTIFACT)
+	rm -f $(CollectionArtifact)
 	rm -f MANIFEST.json
 	rm -rf __pycache__
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true

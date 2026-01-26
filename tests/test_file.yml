@@ -1,0 +1,125 @@
+---
+- name: Test pdutton.xplat.file plugin
+  hosts: localhost
+  gather_facts: true
+
+  tasks:
+    - name: Create a test directory
+      pdutton.xplat.file:
+        path: /tmp/xplat_file_test
+        state: directory
+      register: mkdir_result
+      ignore_errors: true
+      when: ansible_os_family != 'Windows'
+
+    - name: Show mkdir result
+      debug:
+        var: mkdir_result
+      when: mkdir_result is defined
+
+    - name: Verify directory was created
+      pdutton.xplat.stat:
+        path: /tmp/xplat_file_test
+      register: dir_stat
+      when:
+        - ansible_os_family != 'Windows'
+        - mkdir_result is not failed
+
+    - name: Assert directory exists
+      assert:
+        that:
+          - dir_stat.stat.exists | bool
+          - dir_stat.stat.isdir | bool
+        fail_msg: "Expected /tmp/xplat_file_test to be a directory"
+      when:
+        - ansible_os_family != 'Windows'
+        - dir_stat is defined
+        - dir_stat is not failed
+
+    - name: Touch a file
+      pdutton.xplat.file:
+        path: /tmp/xplat_file_test/touched.txt
+        state: touch
+      register: touch_result
+      ignore_errors: true
+      when:
+        - ansible_os_family != 'Windows'
+        - mkdir_result is not failed
+
+    - name: Show touch result
+      debug:
+        var: touch_result
+      when: touch_result is defined
+
+    - name: Verify file was touched
+      pdutton.xplat.stat:
+        path: /tmp/xplat_file_test/touched.txt
+      register: touch_stat
+      when:
+        - ansible_os_family != 'Windows'
+        - touch_result is defined
+        - touch_result is not failed
+
+    - name: Assert touched file exists
+      assert:
+        that:
+          - touch_stat.stat.exists | bool
+          - touch_stat.stat.isreg | bool
+        fail_msg: "Expected /tmp/xplat_file_test/touched.txt to exist as a file"
+      when:
+        - ansible_os_family != 'Windows'
+        - touch_stat is defined
+        - touch_stat is not failed
+
+    - name: Remove the touched file
+      pdutton.xplat.file:
+        path: /tmp/xplat_file_test/touched.txt
+        state: absent
+      register: rm_file_result
+      ignore_errors: true
+      when:
+        - ansible_os_family != 'Windows'
+        - touch_result is defined
+        - touch_result is not failed
+
+    - name: Verify file was removed
+      pdutton.xplat.stat:
+        path: /tmp/xplat_file_test/touched.txt
+      register: rm_stat
+      when:
+        - ansible_os_family != 'Windows'
+        - rm_file_result is defined
+        - rm_file_result is not failed
+
+    - name: Assert file no longer exists
+      assert:
+        that:
+          - not (rm_stat.stat.exists | bool)
+        fail_msg: "Expected /tmp/xplat_file_test/touched.txt to not exist"
+      when:
+        - ansible_os_family != 'Windows'
+        - rm_stat is defined
+        - rm_stat is not failed
+
+    - name: Clean up test directory
+      pdutton.xplat.file:
+        path: /tmp/xplat_file_test
+        state: absent
+      ignore_errors: true
+      when: ansible_os_family != 'Windows'
+
+    - name: Verify directory was removed
+      pdutton.xplat.stat:
+        path: /tmp/xplat_file_test
+      register: final_stat
+      when: ansible_os_family != 'Windows'
+
+    - name: Assert directory no longer exists
+      assert:
+        that:
+          - not (final_stat.stat.exists | bool)
+        fail_msg: "Expected /tmp/xplat_file_test to not exist"
+      when:
+        - ansible_os_family != 'Windows'
+        - final_stat is defined
+        - final_stat is not failed

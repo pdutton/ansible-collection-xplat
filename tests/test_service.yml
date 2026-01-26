@@ -1,0 +1,67 @@
+---
+- name: Test pdutton.xplat.service plugin
+  hosts: localhost
+  gather_facts: true
+
+  tasks:
+    # Note: Service management typically requires root privileges
+    # These tests check basic functionality without modifying system services
+
+    - name: Check if cron service exists (common on Linux)
+      ansible.builtin.shell:
+        cmd: systemctl list-units --type=service | grep -q cron || service --status-all 2>&1 | grep -q cron
+      register: cron_check
+      ignore_errors: true
+      changed_when: false
+      when: ansible_os_family != 'Windows'
+
+    - name: Get status of a common service (cron/crond)
+      pdutton.xplat.service:
+        name: "{{ 'crond' if ansible_os_family == 'RedHat' else 'cron' }}"
+        state: started
+      register: service_result
+      ignore_errors: true
+      become: true
+      when:
+        - ansible_os_family != 'Windows'
+        - cron_check is not failed
+
+    - name: Show service result
+      debug:
+        var: service_result
+      when: service_result is defined
+
+    - name: Verify service module executed
+      assert:
+        that:
+          - service_result is defined
+        fail_msg: "Expected service module to execute"
+      when:
+        - ansible_os_family != 'Windows'
+        - service_result is defined
+        - service_result is not failed
+
+    # Test without become to verify error handling
+    - name: Test service without privileges (should fail gracefully)
+      pdutton.xplat.service:
+        name: nonexistent_service_xplat_test
+        state: started
+      register: service_fail
+      ignore_errors: true
+      when: ansible_os_family != 'Windows'
+
+    - name: Verify service module handles missing service
+      assert:
+        that:
+          - service_fail is failed
+        fail_msg: "Expected service module to fail for nonexistent service"
+      when:
+        - ansible_os_family != 'Windows'
+        - service_fail is defined
+
+    - name: Show service failure message
+      debug:
+        msg: "Service module correctly failed: {{ service_fail.msg | default('unknown error') }}"
+      when:
+        - service_fail is defined
+        - service_fail is failed

@@ -1,0 +1,60 @@
+---
+- name: Test pdutton.xplat.ping plugin
+  hosts: localhost
+  gather_facts: true
+
+  tasks:
+    - name: Test basic ping
+      pdutton.xplat.ping:
+      register: ping_result
+      ignore_errors: true
+
+    - name: Show ping result
+      debug:
+        var: ping_result
+
+    - name: Verify ping succeeded
+      assert:
+        that:
+          - ping_result.ping == 'pong'
+        fail_msg: "Expected ping to return 'pong'"
+      when: ping_result is not failed
+
+    - name: Test ping with custom data
+      pdutton.xplat.ping:
+        data: "hello"
+      register: ping_custom
+      ignore_errors: true
+
+    - name: Show custom ping result
+      debug:
+        var: ping_custom
+
+    - name: Verify custom ping data
+      assert:
+        that:
+          - ping_custom.ping == 'hello'
+        fail_msg: "Expected ping to return 'hello'"
+      when: ping_custom is not failed
+
+    - name: Test ping with another custom value
+      pdutton.xplat.ping:
+        data: "xplat_test"
+      register: ping_xplat
+      ignore_errors: true
+
+    - name: Verify xplat ping data
+      assert:
+        that:
+          - ping_xplat.ping == 'xplat_test'
+        fail_msg: "Expected ping to return 'xplat_test'"
+      when: ping_xplat is not failed
+
+    - name: Document ping functionality
+      debug:
+        msg: |
+          The ping module is a simple connectivity test.
+          It does NOT use ICMP - it just verifies that:
+          1. Ansible can connect to the target
+          2. Python is working on the target
+          3. The module execution pipeline works

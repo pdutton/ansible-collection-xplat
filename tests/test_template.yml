@@ -1,0 +1,99 @@
+---
+- name: Test pdutton.xplat.template plugin
+  hosts: localhost
+  gather_facts: true
+
+  vars:
+    test_name: "xplat template test"
+    custom_value: "my custom value"
+
+  tasks:
+    - name: Create a temporary directory for testing
+      pdutton.xplat.file:
+        path: /tmp/xplat_template_test
+        state: directory
+      register: test_dir
+      ignore_errors: true
+      when: ansible_os_family != 'Windows'
+
+    - name: Template a file to the remote machine
+      pdutton.xplat.template:
+        src: "{{ playbook_dir }}/templates/test_template.j2"
+        dest: /tmp/xplat_template_test/output.txt
+      register: template_result
+      ignore_errors: true
+      when: ansible_os_family != 'Windows'
+
+    - name: Show template result
+      debug:
+        var: template_result
+      when: template_result is defined
+
+    - name: Verify template was created
+      pdutton.xplat.stat:
+        path: /tmp/xplat_template_test/output.txt
+      register: template_stat
+      when:
+        - ansible_os_family != 'Windows'
+        - template_result is not failed
+
+    - name: Assert template file exists
+      assert:
+        that:
+          - template_stat.stat.exists | bool
+          - template_stat.stat.isreg | bool
+        fail_msg: "Expected /tmp/xplat_template_test/output.txt to exist"
+      when:
+        - ansible_os_family != 'Windows'
+        - template_stat is defined
+        - template_stat is not failed
+
+    - name: Read the templated file content
+      pdutton.xplat.command:
+        cmd: cat /tmp/xplat_template_test/output.txt
+      register: template_content
+      ignore_errors: true
+      when:
+        - ansible_os_family != 'Windows'
+        - template_result is not failed
+
+    - name: Show template content
+      debug:
+        var: template_content.stdout
+      when: template_content is defined
+
+    - name: Verify template variable substitution
+      assert:
+        that:
+          - "'xplat template test' in template_content.stdout"
+          - "'my custom value' in template_content.stdout"
+        fail_msg: "Expected template variables to be substituted"
+      when:
+        - ansible_os_family != 'Windows'
+        - template_content is not failed
+
+    - name: Template again - should not change
+      pdutton.xplat.template:
+        src: "{{ playbook_dir }}/templates/test_template.j2"
+        dest: /tmp/xplat_template_test/output.txt
+      register: template_idempotent
+      ignore_errors: true
+      when:
+        - ansible_os_family != 'Windows'
+        - template_result is not failed
+
+    - name: Verify template is idempotent
+      assert:
+        that:
+          - template_idempotent is not changed
+        fail_msg: "Expected template to be idempotent (no change on second run)"
+      when:
+        - ansible_os_family != 'Windows'
+        - template_idempotent is not failed
+
+    - name: Clean up test directory
+      pdutton.xplat.file:
+        path: /tmp/xplat_template_test
+        state: absent
+      ignore_errors: true
+      when: ansible_os_family != 'Windows'

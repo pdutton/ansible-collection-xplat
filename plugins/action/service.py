@@ -10,12 +10,18 @@ from ansible.errors import AnsibleActionFail
 class ActionModule(ActionBase):
     """Cross-platform service action plugin.
 
-    Abstracts differences between ansible.builtin.service (Linux/Mac) and
-    ansible.windows.win_service (Windows) by detecting the target OS and
-    delegating to the appropriate module.
+    Abstracts differences between ansible.builtin.service (Linux),
+    community.general.launchd (macOS), and ansible.windows.win_service (Windows)
+    by detecting the target OS and delegating to the appropriate module.
     """
 
     TRANSFERS_FILES = False
+
+    # Parameters specific to Unix (ansible.builtin.service)
+    UNIX_ONLY_PARAMS = {'pattern', 'sleep', 'arguments', 'args'}
+
+    # Parameters specific to Windows (ansible.windows.win_service)
+    WINDOWS_ONLY_PARAMS = {'start_mode', 'desktop_interact'}
 
     def run(self, tmp=None, task_vars=None):
         """Execute the action plugin.
@@ -40,14 +46,23 @@ class ActionModule(ActionBase):
         os_family = task_vars.get('ansible_os_family', '').lower()
         system = task_vars.get('ansible_system', '').lower()
 
-        # Determine which module to use
+        # Determine which module to use and which parameters to filter
         if os_family == 'windows' or system == 'win32nt':
             module_name = 'ansible.windows.win_service'
+            filter_params = self.UNIX_ONLY_PARAMS
+        elif os_family == 'darwin' or system == 'darwin':
+            module_name = 'community.general.launchd'
+            # launchd only supports: name, state, enabled
+            filter_params = self.UNIX_ONLY_PARAMS | self.WINDOWS_ONLY_PARAMS
         else:
             module_name = 'ansible.builtin.service'
+            filter_params = self.WINDOWS_ONLY_PARAMS
 
-        # Prepare module arguments - pass through all task arguments
-        module_args = self._task.args.copy()
+        # Prepare module arguments - pass through task arguments, filtering platform-specific ones
+        module_args = {
+            k: v for k, v in self._task.args.items()
+            if k not in filter_params
+        }
 
         # Execute the appropriate module
         result = self._execute_module(

@@ -9,8 +9,8 @@ module: service
 short_description: Manage services on remote hosts
 description:
   - This module is a cross-platform wrapper that abstracts differences between
-    ansible.builtin.service (used on Linux and macOS) and ansible.windows.win_service
-    (used on Windows).
+    ansible.builtin.service (Linux), community.general.launchd (macOS), and
+    ansible.windows.win_service (Windows).
   - It provides a consistent interface for managing services across all platforms.
   - The actual implementation delegates to the appropriate platform-specific module.
 
@@ -18,6 +18,7 @@ options:
   name:
     description:
       - Name of the service.
+      - On macOS, this is the launchd service label (e.g., C(com.apple.cups.cupsd)).
     type: str
     required: true
 
@@ -26,7 +27,7 @@ options:
       - C(started)/C(stopped) are idempotent actions that will not run commands
         unless necessary.
       - C(restarted) will always bounce the service.
-      - C(reloaded) will always reload the service.
+      - C(reloaded) will always reload the service (not supported on macOS).
     type: str
     choices: [started, stopped, restarted, reloaded]
 
@@ -39,20 +40,20 @@ options:
     description:
       - If the service does not respond to the status command, name a substring
         to look for as would be found in the output of the C(ps) command.
-      - Only applies to Unix systems.
+      - Only applies to Linux systems.
     type: str
 
   sleep:
     description:
       - If the service is being restarted, this is the number of seconds to sleep
         between the stop and start command.
-      - Only applies to Unix systems.
+      - Only applies to Linux systems.
     type: int
 
   arguments:
     description:
       - Additional arguments provided on the command line.
-      - Only applies to Unix systems.
+      - Only applies to Linux systems.
     type: str
     aliases: [args]
 
@@ -74,12 +75,15 @@ author:
 
 notes:
   - This is an action plugin that delegates to platform-specific modules.
-  - For Linux/macOS uses ansible.builtin.service
+  - For Linux uses ansible.builtin.service
+  - For macOS uses community.general.launchd
   - For Windows uses ansible.windows.win_service
   - Some parameters only apply to specific platforms as noted.
+  - Advanced launchd features (force_stop, plist) require using community.general.launchd directly.
 '''
 
 EXAMPLES = r'''
+# Linux examples
 - name: Start a service
   pdutton.xplat.service:
     name: httpd
@@ -104,6 +108,22 @@ EXAMPLES = r'''
   pdutton.xplat.service:
     name: httpd
     state: started
+    enabled: yes
+
+# macOS examples (uses launchd)
+- name: Start the CUPS printing service on macOS
+  pdutton.xplat.service:
+    name: com.apple.cups.cupsd
+    state: started
+
+- name: Stop a launchd service on macOS
+  pdutton.xplat.service:
+    name: com.apple.mdnsresponder
+    state: stopped
+
+- name: Enable a launchd service to start on boot
+  pdutton.xplat.service:
+    name: com.apple.ftp-proxy
     enabled: yes
 '''
 

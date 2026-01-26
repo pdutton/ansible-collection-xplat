@@ -7,15 +7,21 @@
     # Note: Service management typically requires root privileges
     # These tests check basic functionality without modifying system services
 
+    ###############################
+    # Linux-specific tests
+    ###############################
+
     - name: Check if cron service exists (common on Linux)
       ansible.builtin.shell:
         cmd: systemctl list-units --type=service | grep -q cron || service --status-all 2>&1 | grep -q cron
       register: cron_check
       ignore_errors: true
       changed_when: false
-      when: ansible_os_family != 'Windows'
+      when:
+        - ansible_os_family != 'Windows'
+        - ansible_os_family != 'Darwin'
 
-    - name: Get status of a common service (cron/crond)
+    - name: Get status of a common service (cron/crond) on Linux
       pdutton.xplat.service:
         name: "{{ 'crond' if ansible_os_family == 'RedHat' else 'cron' }}"
         state: started
@@ -24,44 +30,108 @@
       become: true
       when:
         - ansible_os_family != 'Windows'
+        - ansible_os_family != 'Darwin'
         - cron_check is not failed
 
-    - name: Show service result
+    - name: Show Linux service result
       debug:
         var: service_result
-      when: service_result is defined
+      when:
+        - service_result is defined
+        - ansible_os_family != 'Darwin'
 
-    - name: Verify service module executed
+    - name: Verify service module executed on Linux
       assert:
         that:
           - service_result is defined
         fail_msg: "Expected service module to execute"
       when:
         - ansible_os_family != 'Windows'
+        - ansible_os_family != 'Darwin'
         - service_result is defined
         - service_result is not failed
 
-    # Test without become to verify error handling
-    - name: Test service without privileges (should fail gracefully)
+    # Test without become to verify error handling on Linux
+    - name: Test service without privileges on Linux (should fail gracefully)
       pdutton.xplat.service:
         name: nonexistent_service_xplat_test
         state: started
       register: service_fail
       ignore_errors: true
-      when: ansible_os_family != 'Windows'
+      when:
+        - ansible_os_family != 'Windows'
+        - ansible_os_family != 'Darwin'
 
-    - name: Verify service module handles missing service
+    - name: Verify service module handles missing service on Linux
       assert:
         that:
           - service_fail is failed
         fail_msg: "Expected service module to fail for nonexistent service"
       when:
         - ansible_os_family != 'Windows'
+        - ansible_os_family != 'Darwin'
         - service_fail is defined
 
-    - name: Show service failure message
+    - name: Show Linux service failure message
       debug:
         msg: "Service module correctly failed: {{ service_fail.msg | default('unknown error') }}"
       when:
         - service_fail is defined
         - service_fail is failed
+        - ansible_os_family != 'Darwin'
+
+    ###############################
+    # macOS-specific tests (launchd)
+    ###############################
+
+    - name: Check launchd service status on macOS (com.apple.metadata.mds)
+      pdutton.xplat.service:
+        name: com.apple.metadata.mds
+        state: started
+      register: macos_service_result
+      ignore_errors: true
+      become: true
+      when: ansible_os_family == 'Darwin'
+
+    - name: Show macOS launchd service result
+      debug:
+        var: macos_service_result
+      when:
+        - ansible_os_family == 'Darwin'
+        - macos_service_result is defined
+
+    - name: Verify launchd module executed on macOS
+      assert:
+        that:
+          - macos_service_result is defined
+        fail_msg: "Expected launchd module to execute on macOS"
+      when:
+        - ansible_os_family == 'Darwin'
+        - macos_service_result is defined
+        - macos_service_result is not failed
+
+    # Test nonexistent launchd service
+    - name: Test nonexistent launchd service on macOS (should fail)
+      pdutton.xplat.service:
+        name: com.nonexistent.service.xplat.test
+        state: started
+      register: macos_service_fail
+      ignore_errors: true
+      when: ansible_os_family == 'Darwin'
+
+    - name: Verify launchd module handles missing service on macOS
+      assert:
+        that:
+          - macos_service_fail is failed
+        fail_msg: "Expected launchd module to fail for nonexistent service"
+      when:
+        - ansible_os_family == 'Darwin'
+        - macos_service_fail is defined
+
+    - name: Show macOS launchd failure message
+      debug:
+        msg: "Launchd module correctly failed: {{ macos_service_fail.msg | default('unknown error') }}"
+      when:
+        - ansible_os_family == 'Darwin'
+        - macos_service_fail is defined
+        - macos_service_fail is failed

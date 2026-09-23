@@ -1,0 +1,4 @@
+---
+# 2.14 is the first ansible-core release that reads the YAML sidecar docs
+# used by the filter plugins in plugins/filter/.
+requires_ansible: ">=2.14.0"

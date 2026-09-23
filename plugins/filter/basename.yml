@@ -1,4 +1,4 @@
-DOCUMENTATION: |
+DOCUMENTATION:
   name: basename
   author: Peter Dutton
   short_description: Extract the basename from a path string
@@ -12,65 +12,63 @@ DOCUMENTATION: |
     - Unlike the L(stat,ansible.builtin.stat) action plugin which runs on target hosts,
       this filter runs on the control node and detects path format from the path string.
     - Windows paths are detected by looking for backslashes, drive letters (C:), or UNC
-      prefixes (\\\\).
+      prefixes (\\).
     - Trailing slashes result in an empty string (standard basename behavior).
     - This filter uses Python's C(ntpath) for Windows paths and C(posixpath) for Unix
       paths, ensuring correct behavior regardless of the control node's operating system.
   options:
-    path:
+    _input:
       description: A path string in Unix or Windows format
       type: str
       required: true
-  examples: |
-    # Unix-style paths
-    - name: Extract basename from Unix path
-      debug:
-        msg: "{{ '/etc/hostname' | pdutton.xplat.basename }}"
-      # Output: hostname
 
-    - name: Extract basename from Unix file path
-      debug:
-        msg: "{{ '/usr/bin/python3' | pdutton.xplat.basename }}"
-      # Output: python3
+EXAMPLES: |
+  # Unix-style paths
+  - name: Extract basename from Unix path
+    debug:
+      msg: "{{ '/etc/hostname' | pdutton.xplat.basename }}"
+    # Output: hostname
 
-    # Windows-style paths
-    - name: Extract basename from Windows path with backslashes
-      debug:
-        msg: "{{ 'C:\\Windows\\System32\\cmd.exe' | pdutton.xplat.basename }}"
-      # Output: cmd.exe
+  - name: Extract basename from Unix file path
+    debug:
+      msg: "{{ '/usr/bin/python3' | pdutton.xplat.basename }}"
+    # Output: python3
 
-    - name: Extract basename from Windows path with forward slashes
-      debug:
-        msg: "{{ 'C:/Users/Admin/Documents/report.pdf' | pdutton.xplat.basename }}"
-      # Output: report.pdf
+  # Windows-style paths
+  - name: Extract basename from Windows path with backslashes
+    debug:
+      msg: "{{ 'C:\\Windows\\System32\\cmd.exe' | pdutton.xplat.basename }}"
+    # Output: cmd.exe
 
-    # UNC paths
-    - name: Extract basename from UNC network path
-      debug:
-        msg: "{{ '\\\\server\\share\\document.docx' | pdutton.xplat.basename }}"
-      # Output: document.docx
+  - name: Extract basename from Windows path with forward slashes
+    debug:
+      msg: "{{ 'C:/Users/Admin/Documents/report.pdf' | pdutton.xplat.basename }}"
+    # Output: report.pdf
 
-    # Edge cases
-    - name: Extract basename with trailing slash
-      debug:
-        msg: "{{ '/path/to/directory/' | pdutton.xplat.basename }}"
-      # Output: (empty string)
+  # UNC paths
+  - name: Extract basename from UNC network path
+    debug:
+      msg: "{{ '\\\\server\\share\\document.docx' | pdutton.xplat.basename }}"
+    # Output: document.docx
 
-    - name: Extract basename from single filename
-      debug:
-        msg: "{{ 'filename.txt' | pdutton.xplat.basename }}"
-      # Output: filename.txt
+  # Edge cases
+  - name: Extract basename with trailing slash
+    debug:
+      msg: "{{ '/path/to/directory/' | pdutton.xplat.basename }}"
+    # Output: (empty string)
 
-    - name: Extract basename from empty string
-      debug:
-        msg: "{{ '' | pdutton.xplat.basename }}"
-      # Output: (empty string)
+  - name: Extract basename from single filename
+    debug:
+      msg: "{{ 'filename.txt' | pdutton.xplat.basename }}"
+    # Output: filename.txt
 
-  return:
+  - name: Extract basename from empty string
+    debug:
+      msg: "{{ '' | pdutton.xplat.basename }}"
+    # Output: (empty string)
+
+RETURN:
+  _value:
     description: The basename of the path (final path component)
     type: str
-    examples:
-      - "hostname"
-      - "cmd.exe"
-      - "document.pdf"
-      - ""
+    sample: hostname

@@ -1,4 +1,4 @@
-DOCUMENTATION: |
+DOCUMENTATION:
   name: join
   author: Peter Dutton
   short_description: Join path components using appropriate separator
@@ -10,64 +10,64 @@ DOCUMENTATION: |
   notes:
     - The path format is determined by the base (first) argument only.
     - Windows paths are detected by looking for backslashes, drive letters (C:), or UNC
-      prefixes (\\\\) in the base path.
+      prefixes (\\) in the base path.
     - If a component is an absolute path, it replaces the current path (standard
       os.path.join behavior).
     - This filter uses Python's C(ntpath) for Windows paths and C(posixpath) for Unix
       paths.
+  positional: _input, _parts
   options:
-    base:
+    _input:
       description: The base path string (determines path format)
       type: str
       required: true
-    parts:
+    _parts:
       description: Additional path components to join (passed as filter arguments)
       type: list
       elements: str
       required: false
-  examples: |
-    # Unix-style paths
-    - name: Join Unix path components
-      debug:
-        msg: "{{ '/etc' | pdutton.xplat.join('hostname') }}"
-      # Output: /etc/hostname
 
-    - name: Join multiple Unix path components
-      debug:
-        msg: "{{ '/home' | pdutton.xplat.join('user', 'documents', 'report.txt') }}"
-      # Output: /home/user/documents/report.txt
+EXAMPLES: |
+  # Unix-style paths
+  - name: Join Unix path components
+    debug:
+      msg: "{{ '/etc' | pdutton.xplat.join('hostname') }}"
+    # Output: /etc/hostname
 
-    # Windows-style paths
-    - name: Join Windows path components
-      debug:
-        msg: "{{ 'C:\\Windows' | pdutton.xplat.join('System32', 'cmd.exe') }}"
-      # Output: C:\Windows\System32\cmd.exe
+  - name: Join multiple Unix path components
+    debug:
+      msg: "{{ '/home' | pdutton.xplat.join('user', 'documents', 'report.txt') }}"
+    # Output: /home/user/documents/report.txt
 
-    - name: Join Windows path with forward slashes
-      debug:
-        msg: "{{ 'C:/Users' | pdutton.xplat.join('Admin', 'Desktop') }}"
-      # Output: C:/Users/Admin/Desktop
+  # Windows-style paths
+  - name: Join Windows path components
+    debug:
+      msg: "{{ 'C:\\Windows' | pdutton.xplat.join('System32', 'cmd.exe') }}"
+    # Output: C:\Windows\System32\cmd.exe
 
-    # UNC paths
-    - name: Join UNC path components
-      debug:
-        msg: "{{ '\\\\server\\share' | pdutton.xplat.join('folder', 'file.txt') }}"
-      # Output: \\server\share\folder\file.txt
+  - name: Join Windows path with forward slashes
+    debug:
+      msg: "{{ 'C:/Users' | pdutton.xplat.join('Admin', 'Desktop') }}"
+    # Output: C:/Users/Admin/Desktop
 
-    # Dynamic path building
-    - name: Build path from variables
-      vars:
-        base_dir: "/var/log"
-        app_name: "myapp"
-        log_file: "app.log"
-      debug:
-        msg: "{{ base_dir | pdutton.xplat.join(app_name, log_file) }}"
-      # Output: /var/log/myapp/app.log
+  # UNC paths
+  - name: Join UNC path components
+    debug:
+      msg: "{{ '\\\\server\\share' | pdutton.xplat.join('folder', 'file.txt') }}"
+    # Output: \\server\share\folder\file.txt
 
-  return:
+  # Dynamic path building
+  - name: Build path from variables
+    vars:
+      base_dir: "/var/log"
+      app_name: "myapp"
+      log_file: "app.log"
+    debug:
+      msg: "{{ base_dir | pdutton.xplat.join(app_name, log_file) }}"
+    # Output: /var/log/myapp/app.log
+
+RETURN:
+  _value:
     description: The joined path string
     type: str
-    examples:
-      - "/etc/hostname"
-      - "C:\\Windows\\System32\\cmd.exe"
-      - "\\\\server\\share\\file.txt"
+    sample: /etc/hostname

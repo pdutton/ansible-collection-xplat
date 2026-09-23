@@ -1,7 +1,7 @@
 ---
 namespace: pdutton
 name: xplat
-version: 1.0.1
+version: 1.0.2
 description: Cross-platform Ansible collection for multi-OS operations
 license:
   - MIT

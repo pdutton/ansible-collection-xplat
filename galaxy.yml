@@ -17,3 +17,11 @@ tags:
   - macos
 dependencies:
   community.general: ">=4.0.0"
+build_ignore:
+  - .github
+  - .gitignore
+  - .claude
+  - CLAUDE.md
+  - Makefile
+  - TODO.md
+  - tests
